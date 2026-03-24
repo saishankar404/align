@@ -6,7 +6,7 @@ import SheetOverlay from "./SheetOverlay";
 import { useAppContext } from "@/lib/context/AppContext";
 import { todayStr } from "@/lib/utils/dates";
 import { db, type LocalMove } from "@/lib/db/local";
-import { syncAllIfCloud } from "@/lib/db/sync";
+import { requestSyncIfCloud } from "@/lib/db/sync";
 
 function MoveRow({ move, onToggle }: { move: LocalMove; onToggle: () => void }) {
   return (
@@ -28,6 +28,7 @@ export default function DayDetailSheet() {
 
   const moves = context.allMovesThisCycle.filter((item) => item.date === date);
   const checkin = context.checkinsThisCycle.find((item) => item.date === date);
+  const doneCount = moves.filter((item) => item.status === "done").length;
 
   const toggleTodayMove = async (move: LocalMove) => {
     if (!context.userId || !isToday) return;
@@ -46,16 +47,29 @@ export default function DayDetailSheet() {
     });
 
     await context.refresh();
-    syncAllIfCloud(context.userId).catch(() => undefined);
+    requestSyncIfCloud(context.userId);
   };
 
   return (
     <SheetOverlay isOpen={isOpen} onClose={context.closeSheet}>
       <div className="px-7 pb-2">
-        <div className="font-body text-[9px] font-medium tracking-[0.12em] uppercase text-dusk mb-2">{date}</div>
+        <div className="font-body text-[9px] font-medium tracking-[0.12em] uppercase text-dusk mb-1">Day detail</div>
+        <div className="font-gtw text-[28px] tracking-[-0.03em] leading-[1] text-ink mb-2">{date}</div>
+
+        <div className="w-full rounded-[14px] bg-sand border border-border p-3 mb-4">
+          <div className="flex items-center justify-between">
+            <span className="font-body text-[11px] text-dusk">Moves completed</span>
+            <span className="font-gtw text-[18px] tracking-[-0.02em] text-ink">{doneCount}/{moves.length}</span>
+          </div>
+          <div className="h-[1px] bg-border my-2" />
+          <div className="flex items-center justify-between">
+            <span className="font-body text-[11px] text-dusk">Check-in</span>
+            <span className="font-body text-[12px] text-ink capitalize">{checkin?.status?.replace("_", " ") ?? "none"}</span>
+          </div>
+        </div>
 
         {isFuture ? (
-          <div className="font-body text-[14px] text-dusk mb-6">No moves yet.</div>
+          <div className="w-full rounded-[14px] bg-sand border border-border p-4 font-body text-[14px] text-dusk mb-6">No moves yet for this day.</div>
         ) : null}
 
         {isPast ? (
@@ -66,7 +80,6 @@ export default function DayDetailSheet() {
                 <span className={`text-xs ${move.status === "done" ? "text-forest" : "text-dusk"}`}>{move.status}</span>
               </div>
             ))}
-            <div className="text-sm text-dusk mb-4">Check-in: {checkin?.status ?? "none"}</div>
           </>
         ) : null}
 

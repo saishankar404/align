@@ -2,8 +2,8 @@ export const textContainerVariants = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.07,
-      delayChildren: 0.05,
+      staggerChildren: 0.03,
+      delayChildren: 0.03,
     },
   },
 };
@@ -14,7 +14,7 @@ export const textItemVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.45,
+      duration: 0.24,
       ease: [0.22, 1, 0.36, 1] as const,
     },
   },

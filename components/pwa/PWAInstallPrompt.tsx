@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion, useIsPresent } from "framer-motion";
+import {
+  ENTRANCE_TRANSITION,
+  EXIT_TRANSITION_STRICT,
+  MOTION_DURATION,
+  MOTION_SPRING,
+  TAP_SCALE,
+} from "@/lib/motion/tokens";
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -33,6 +40,7 @@ export default function PWAInstallPrompt() {
   const [installed, setInstalled] = useState(false);
   const [promptEvent, setPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
 
   const shouldRenderOnPath = useMemo(
     () => pathname.startsWith("/home") || pathname.startsWith("/onboarding"),
@@ -77,62 +85,75 @@ export default function PWAInstallPrompt() {
   };
 
   const install = async () => {
+    setIsInstalling(true);
     if (!promptEvent) {
       setShowHint(true);
+      setIsInstalling(false);
       return;
     }
     await promptEvent.prompt();
     const result = await promptEvent.userChoice;
     if (result.outcome === "accepted") {
       setVisible(false);
+      setIsInstalling(false);
       return;
     }
     setShowHint(true);
+    setIsInstalling(false);
+  };
+
+  const PromptLayer = () => {
+    const isPresent = useIsPresent();
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, transition: ENTRANCE_TRANSITION }}
+        exit={{ opacity: 0, transition: EXIT_TRANSITION_STRICT }}
+        className={`fixed inset-0 z-[62] bg-black/35 flex items-end px-4 pb-[calc(var(--sab)+14px)] ${isPresent ? "pointer-events-auto" : "pointer-events-none"}`}
+      >
+        <motion.div
+          initial={{ y: 36, opacity: 0 }}
+          animate={{ y: 0, opacity: 1, transition: ENTRANCE_TRANSITION }}
+          exit={{ y: 36, opacity: 0, transition: EXIT_TRANSITION_STRICT }}
+          className="w-full rounded-[20px] bg-parchment border border-border px-5 py-4 shadow-[0_20px_70px_rgba(0,0,0,.22)]"
+        >
+          <div className="font-body text-[9px] font-medium tracking-[0.12em] uppercase text-dusk mb-1">Best experience</div>
+          <div className="font-gtw text-[27px] leading-[1.05] tracking-[-0.03em] text-ink mb-2">Install Align.</div>
+          <p className="font-body text-[13px] leading-[1.6] text-dusk mb-4">
+            Install for faster launch, offline access, and cleaner full-screen experience.
+          </p>
+          {showHint ? (
+            <p className="font-body text-[12px] leading-[1.55] text-ink mb-3">{getInstallHint()}</p>
+          ) : null}
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileTap={{ scale: TAP_SCALE.default }}
+              transition={MOTION_SPRING.press}
+              onClick={() => {
+                void install();
+              }}
+              disabled={!isPresent || isInstalling}
+              className="flex-1 rounded-full bg-ink text-parchment py-[12px] font-gtw text-[13px] tracking-[0.02em] min-hit-target"
+            >
+              {isInstalling ? "Installing..." : "Install"}
+            </motion.button>
+            <button
+              onClick={dismiss}
+              disabled={!isPresent || isInstalling}
+              className="rounded-full border border-bs bg-sand text-dusk px-4 py-[12px] font-body text-[12px] min-hit-target touch-hit-area transition-colors"
+              style={{ transitionDuration: `${MOTION_DURATION.hover}s` }}
+            >
+              Not now
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
   };
 
   return (
-    <AnimatePresence>
-      {visible ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[62] bg-black/35 flex items-end px-4 pb-[calc(var(--sab)+14px)]"
-        >
-          <motion.div
-            initial={{ y: 36, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 36, opacity: 0 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="w-full rounded-[20px] bg-parchment border border-border px-5 py-4 shadow-[0_20px_70px_rgba(0,0,0,.22)]"
-          >
-            <div className="font-body text-[9px] font-medium tracking-[0.12em] uppercase text-dusk mb-1">Best experience</div>
-            <div className="font-gtw text-[27px] leading-[1.05] tracking-[-0.03em] text-ink mb-2">Install Align.</div>
-            <p className="font-body text-[13px] leading-[1.6] text-dusk mb-4">
-              Install for faster launch, offline access, and cleaner full-screen experience.
-            </p>
-            {showHint ? (
-              <p className="font-body text-[12px] leading-[1.55] text-ink mb-3">{getInstallHint()}</p>
-            ) : null}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  void install();
-                }}
-                className="flex-1 rounded-full bg-ink text-parchment py-[12px] font-gtw text-[13px] tracking-[0.02em]"
-              >
-                Install
-              </button>
-              <button
-                onClick={dismiss}
-                className="rounded-full border border-bs bg-sand text-dusk px-4 py-[12px] font-body text-[12px]"
-              >
-                Not now
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      ) : null}
+    <AnimatePresence initial={false}>
+      {visible ? <PromptLayer /> : null}
     </AnimatePresence>
   );
 }

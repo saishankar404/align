@@ -5,7 +5,7 @@ import SheetOverlay from "./SheetOverlay";
 import { useAppContext } from "@/lib/context/AppContext";
 import { db } from "@/lib/db/local";
 import { newId } from "@/lib/utils/ids";
-import { syncAllIfCloud } from "@/lib/db/sync";
+import { requestSyncIfCloud } from "@/lib/db/sync";
 
 type LaterType = "link" | "idea";
 
@@ -55,7 +55,7 @@ export default function AddLaterSheet() {
 
     await context.refresh();
     context.closeSheet();
-    syncAllIfCloud(context.userId).catch(() => undefined);
+    requestSyncIfCloud(context.userId);
     setLoading(false);
     setContent("");
     setNote("");
@@ -83,8 +83,8 @@ export default function AddLaterSheet() {
         />
 
         <div className="flex gap-2 mb-4">
-          <button onClick={() => setManualType("link")} className={`px-3 py-2 rounded-full text-xs ${type === "link" ? "bg-ink text-parchment" : "bg-sand text-dusk"}`}>Link</button>
-          <button onClick={() => setManualType("idea")} className={`px-3 py-2 rounded-full text-xs ${type === "idea" ? "bg-ink text-parchment" : "bg-sand text-dusk"}`}>Idea</button>
+          <button onClick={() => setManualType("link")} className={`px-3 py-2 rounded-full text-xs min-hit-target touch-hit-area ${type === "link" ? "bg-ink text-parchment" : "bg-sand text-dusk"}`}>Link</button>
+          <button onClick={() => setManualType("idea")} className={`px-3 py-2 rounded-full text-xs min-hit-target touch-hit-area ${type === "idea" ? "bg-ink text-parchment" : "bg-sand text-dusk"}`}>Idea</button>
         </div>
 
         {error ? <p className="text-sm text-terra mb-3">{error}</p> : null}
@@ -99,7 +99,7 @@ export default function AddLaterSheet() {
           <span>{loading ? "Saving..." : "Save to later pile"}</span>
           <span>→</span>
         </button>
-        <button onClick={context.closeSheet} className="w-full py-3 font-body text-[13px] text-dusk mt-2">Cancel</button>
+        <button onClick={context.closeSheet} className="w-full py-3 font-body text-[13px] text-dusk mt-2 min-hit-target touch-hit-area">Cancel</button>
       </div>
     </SheetOverlay>
   );

@@ -7,6 +7,7 @@ import type { ScreenProps } from "../OnboardingFlow";
 import { useThreadDraw } from "@/hooks/useThreadDraw";
 import { useLenis } from "@/hooks/useLenis";
 import { textContainerVariants, textItemVariants } from "./textVariants";
+import { MOTION_SPRING, TAP_SCALE } from "@/lib/motion/tokens";
 
 const CHIPS = [
   "landing page",
@@ -71,8 +72,8 @@ export default function DirectionsScreen({ data, setData, next }: ScreenProps) {
             />
             <path d="M298 12 L312 18 L300 28" stroke="#EDE0C8" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="animate-[floatY_3.5s_ease-in-out_infinite]" />
             <motion.circle cx="220" cy="80" fill="#E8694A" initial={{ r: 0 }} animate={{ r: d1.trim() ? 7 : 0 }} transition={{ type: "spring", stiffness: 320, damping: 20 }} />
-            <motion.circle cx="142" cy="50" fill="#5DBF8A" initial={{ r: 0 }} animate={{ r: d2.trim() ? 7 : 0 }} transition={{ type: "spring", stiffness: 320, damping: 20, delay: 0.08 }} />
-            <motion.circle cx="60" cy="70" fill="#B8AEE0" initial={{ r: 0 }} animate={{ r: d3.trim() ? 7 : 0 }} transition={{ type: "spring", stiffness: 320, damping: 20, delay: 0.16 }} />
+            <motion.circle cx="142" cy="50" fill="#5DBF8A" initial={{ r: 0 }} animate={{ r: d2.trim() ? 7 : 0 }} transition={{ type: "spring", stiffness: 320, damping: 20, delay: 0.04 }} />
+            <motion.circle cx="60" cy="70" fill="#B8AEE0" initial={{ r: 0 }} animate={{ r: d3.trim() ? 7 : 0 }} transition={{ type: "spring", stiffness: 320, damping: 20, delay: 0.05 }} />
           </svg>
         </motion.div>
 
@@ -105,8 +106,8 @@ export default function DirectionsScreen({ data, setData, next }: ScreenProps) {
             return (
               <motion.button
                 key={chip}
-                whileTap={{ scale: 0.96 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                whileTap={{ scale: TAP_SCALE.default }}
+                transition={MOTION_SPRING.press}
                 onClick={() => toggleChip(chip)}
                 className={`font-body text-[12px] px-[14px] py-[7px] rounded-full border ${selected ? "bg-ink text-parchment border-ink" : "text-dusk border-border"}`}
               >

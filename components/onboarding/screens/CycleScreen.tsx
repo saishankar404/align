@@ -7,6 +7,7 @@ import DotGrid from "../shared/DotGrid";
 import CtaButton from "../shared/CtaButton";
 import type { ScreenProps } from "../OnboardingFlow";
 import { textContainerVariants, textItemVariants } from "./textVariants";
+import { MOTION_SPRING, TAP_SCALE } from "@/lib/motion/tokens";
 
 export default function CycleScreen({ data, setData, next }: ScreenProps) {
   const duration = data.cycleLength;
@@ -30,8 +31,8 @@ export default function CycleScreen({ data, setData, next }: ScreenProps) {
             return (
               <motion.button
                 key={n}
-                whileTap={{ scale: 0.96 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                whileTap={{ scale: TAP_SCALE.default }}
+                transition={MOTION_SPRING.press}
                 onClick={() => setData((prev) => ({ ...prev, cycleLength: n as 7 | 14 }))}
                 className={`flex-1 rounded-[14px] px-3 py-[22px] text-center border-[1.5px] ${selected ? "border-ink bg-sand" : "border-dashed border-border"}`}
               >

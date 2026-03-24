@@ -6,6 +6,14 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 });
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  webpack: (config, { dev }) => {
+    // Avoid large filesystem cache writes in local dev on constrained disks.
+    if (dev) {
+      config.cache = false;
+    }
+    return config;
+  },
+};
 
 module.exports = withPWA(nextConfig);

@@ -1,7 +1,7 @@
 "use client";
 
-import type { Tables } from "@/lib/db/types";
 import type { Json } from "@/lib/db/types";
+import type { Tables } from "@/lib/db/types";
 import type {
   LocalCheckin,
   LocalCycle,
@@ -12,9 +12,9 @@ import type {
   LocalReflection,
 } from "@/lib/db/local";
 import { db } from "@/lib/db/local";
+import { isCloudMode } from "@/lib/identity/client";
 import { supabase } from "@/lib/supabase/client";
 import { debug } from "@/lib/utils/debug";
-import { isCloudMode } from "@/lib/identity/client";
 
 type DbProfile = Tables<"profiles">;
 type DbCycle = Tables<"cycles">;
@@ -23,6 +23,23 @@ type DbMove = Tables<"moves">;
 type DbCheckin = Tables<"checkins">;
 type DbLaterItem = Tables<"later_items">;
 type DbReflection = Tables<"reflections">;
+
+const REQUEST_DEBOUNCE_MS = 700;
+const MANUAL_COOLDOWN_MS = 3500;
+
+const inFlightSyncByUser = new Map<string, Promise<void>>();
+const pendingFollowupByUser = new Set<string>();
+const debounceTimerByUser = new Map<string, number>();
+const lastManualSyncAtByUser = new Map<string, number>();
+
+function isOnline(): boolean {
+  if (typeof navigator === "undefined") return true;
+  return navigator.onLine;
+}
+
+function pendingDeleteKey(table: "moves", recordId: string): string {
+  return `${table}:${recordId}`;
+}
 
 function profileToDb(p: LocalProfile): DbProfile {
   let pushSubscription: Json | null = null;
@@ -246,6 +263,46 @@ async function pushUnsyncedTable<T extends { id: string }>(
   await Promise.all(records.map((record) => markSynced(record.id)));
 }
 
+async function processPendingDeletes(userId: string): Promise<void> {
+  const pending = await db.pendingDeletes.where("userId").equals(userId).toArray();
+  if (!pending.length) return;
+
+  await Promise.all(
+    pending.map(async (entry) => {
+      if (entry.table !== "moves") return;
+      const { error } = await supabase.from("moves").delete().eq("id", entry.recordId).eq("user_id", userId);
+      if (error) {
+        debug("delete moves failed", error.message);
+        await db.pendingDeletes.update(entry.key, { attempts: entry.attempts + 1 });
+        return;
+      }
+      await db.pendingDeletes.delete(entry.key);
+    })
+  );
+}
+
+async function getPendingMoveDeleteIds(userId: string): Promise<Set<string>> {
+  const rows = await db.pendingDeletes.where("[userId+table]").equals([userId, "moves"]).toArray();
+  return new Set(rows.map((row) => row.recordId));
+}
+
+export async function deleteMoveWithTombstone(userId: string, moveId: string): Promise<void> {
+  const key = pendingDeleteKey("moves", moveId);
+  const now = new Date().toISOString();
+
+  await db.transaction("rw", db.moves, db.pendingDeletes, async () => {
+    await db.moves.delete(moveId);
+    await db.pendingDeletes.put({
+      key,
+      table: "moves",
+      recordId: moveId,
+      userId,
+      createdAt: now,
+      attempts: 0,
+    });
+  });
+}
+
 export async function pushUnsynced(userId: string): Promise<void> {
   await pushProfiles(userId);
 
@@ -340,6 +397,8 @@ async function mergeIfSynced<T extends { id: string; _synced: 0 | 1 }>(
 }
 
 export async function pullFromSupabase(userId: string): Promise<void> {
+  const pendingMoveDeleteIds = await getPendingMoveDeleteIds(userId);
+
   try {
     const { data: profile } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
     if (profile) {
@@ -378,6 +437,7 @@ export async function pullFromSupabase(userId: string): Promise<void> {
   try {
     const { data: moves } = await supabase.from("moves").select("*").eq("user_id", userId);
     for (const row of moves ?? []) {
+      if (pendingMoveDeleteIds.has(row.id)) continue;
       await mergeIfSynced(
         (id) => db.moves.get(id),
         (value) => db.moves.put(value),
@@ -428,27 +488,95 @@ export async function pullFromSupabase(userId: string): Promise<void> {
   }
 }
 
-export async function syncAll(userId: string): Promise<void> {
+async function performSync(userId: string): Promise<void> {
+  await processPendingDeletes(userId);
   await pushUnsynced(userId);
   await pullFromSupabase(userId);
 }
 
-export async function syncAllIfCloud(userId: string): Promise<void> {
+async function runSingleFlightSync(userId: string): Promise<void> {
+  if (!isOnline()) return;
+
+  const existing = inFlightSyncByUser.get(userId);
+  if (existing) {
+    pendingFollowupByUser.add(userId);
+    await existing;
+    return;
+  }
+
+  const runPromise = performSync(userId)
+    .catch((error) => {
+      debug("sync failed", error);
+      throw error;
+    })
+    .finally(() => {
+      inFlightSyncByUser.delete(userId);
+    });
+
+  inFlightSyncByUser.set(userId, runPromise);
+  await runPromise;
+
+  if (pendingFollowupByUser.has(userId) && isOnline()) {
+    pendingFollowupByUser.delete(userId);
+    await runSingleFlightSync(userId);
+  }
+}
+
+export function requestSyncIfCloud(userId: string): void {
   if (!isCloudMode()) return;
-  await syncAll(userId);
+  if (!isOnline()) return;
+
+  const existingTimer = debounceTimerByUser.get(userId);
+  if (existingTimer) {
+    window.clearTimeout(existingTimer);
+  }
+
+  const timer = window.setTimeout(() => {
+    debounceTimerByUser.delete(userId);
+    void runSingleFlightSync(userId);
+  }, REQUEST_DEBOUNCE_MS);
+
+  debounceTimerByUser.set(userId, timer);
+}
+
+export async function syncAll(userId: string): Promise<void> {
+  await runSingleFlightSync(userId);
+}
+
+export async function syncAllIfCloud(
+  userId: string,
+  options?: { manual?: boolean; immediate?: boolean }
+): Promise<void> {
+  if (!isCloudMode()) return;
+
+  if (options?.immediate === false) {
+    requestSyncIfCloud(userId);
+    return;
+  }
+
+  if (options?.manual) {
+    const now = Date.now();
+    const last = lastManualSyncAtByUser.get(userId) ?? 0;
+    if (now - last < MANUAL_COOLDOWN_MS) {
+      return;
+    }
+    lastManualSyncAtByUser.set(userId, now);
+  }
+
+  await runSingleFlightSync(userId);
 }
 
 export function startAutoSync(userId: string): () => void {
   const handler = () => {
     window.setTimeout(() => {
-      syncAll(userId).catch((error) => debug("auto sync failed", error));
+      void runSingleFlightSync(userId);
     }, 500);
   };
 
   window.addEventListener("online", handler);
 
   if (navigator.onLine) {
-    syncAll(userId).catch((error) => debug("initial auto sync failed", error));
+    void runSingleFlightSync(userId);
   }
 
   return () => {

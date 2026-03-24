@@ -11,28 +11,6 @@ interface ProfileRow {
   push_subscription: string | Record<string, unknown> | null;
 }
 
-function getLocalMinutes(timezone: string): number {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-  }).formatToParts(new Date());
-
-  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? "0");
-  const minute = Number(parts.find((part) => part.type === "minute")?.value ?? "0");
-  return hour * 60 + minute;
-}
-
-function toMinutes(hhmm: string): number {
-  const [h, m] = hhmm.split(":").map((value) => Number(value));
-  return (h * 60) + m;
-}
-
-function inWindow(nowMinutes: number, targetMinutes: number): boolean {
-  return Math.abs(nowMinutes - targetMinutes) <= 2;
-}
-
 function normalizeSubscription(
   value: string | Record<string, unknown> | null
 ): Record<string, unknown> | null {
@@ -49,6 +27,17 @@ function normalizeSubscription(
     }
   }
   return value;
+}
+
+function isInNotifWindow(nowUtc: Date, targetTimeHHMM: string, timezone: string): boolean {
+  const safeTimezone = timezone || "UTC";
+  const localTime = new Date(nowUtc.toLocaleString("en-US", { timeZone: safeTimezone }));
+  const [th, tm] = targetTimeHHMM.split(":").map(Number);
+  const localH = localTime.getHours();
+  const localM = localTime.getMinutes();
+  const localTotalMins = localH * 60 + localM;
+  const targetTotalMins = th * 60 + tm;
+  return localTotalMins >= targetTotalMins && localTotalMins < targetTotalMins + 5;
 }
 
 Deno.serve(async () => {
@@ -74,20 +63,18 @@ Deno.serve(async () => {
   }
 
   const profiles = (data ?? []) as ProfileRow[];
+  const nowUtc = new Date();
+  let sent = 0;
 
   for (const profile of profiles) {
     const subscription = normalizeSubscription(profile.push_subscription);
     if (!subscription) continue;
 
-    const nowMinutes = getLocalMinutes(profile.timezone || "UTC");
-    const morningMinutes = toMinutes(profile.notif_morning_time || "08:00");
-    const nightMinutes = toMinutes(profile.notif_night_time || "21:30");
-
     let payload: { title: string; body: string; url: string } | null = null;
 
-    if (inWindow(nowMinutes, morningMinutes)) {
+    if (isInNotifWindow(nowUtc, profile.notif_morning_time || "08:00", profile.timezone || "UTC")) {
       payload = { title: "Align.", body: "What are you moving today?", url: "/home" };
-    } else if (inWindow(nowMinutes, nightMinutes)) {
+    } else if (isInNotifWindow(nowUtc, profile.notif_night_time || "21:30", profile.timezone || "UTC")) {
       payload = { title: "Align.", body: "Did you show up today?", url: "/home?sheet=night-checkin" };
     }
 
@@ -95,6 +82,7 @@ Deno.serve(async () => {
 
     try {
       await webpush.sendNotification(subscription, JSON.stringify(payload));
+      sent += 1;
     } catch (pushError) {
       const err = pushError as { statusCode?: number };
       if (err.statusCode === 410) {
@@ -106,7 +94,7 @@ Deno.serve(async () => {
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, sent: profiles.length }), {
+  return new Response(JSON.stringify({ ok: true, sent }), {
     headers: { "Content-Type": "application/json" },
   });
 });

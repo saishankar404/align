@@ -3,13 +3,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  AddCircleIcon,
-  Calendar03Icon,
-  Home01Icon,
-  ListViewIcon,
-  UserIcon,
-} from "@hugeicons/core-free-icons";
+import Calendar03Icon from "@hugeicons/core-free-icons/dist/esm/Calendar03Icon";
+import Home01Icon from "@hugeicons/core-free-icons/dist/esm/Home01Icon";
+import ListViewIcon from "@hugeicons/core-free-icons/dist/esm/ListViewIcon";
+import UserIcon from "@hugeicons/core-free-icons/dist/esm/UserIcon";
+import AiIdeaIcon from "@hugeicons/core-free-icons/dist/esm/AiIdeaIcon";
 import TodayView from "./views/TodayView";
 import WindowView from "./views/WindowView";
 import LaterView from "./views/LaterView";
@@ -24,9 +22,13 @@ import AddLaterSheet from "./sheets/AddLaterSheet";
 import DirectionDetailSheet from "./sheets/DirectionDetailSheet";
 import LaterItemSheet from "./sheets/LaterItemSheet";
 import DayDetailSheet from "./sheets/DayDetailSheet";
+import DirectionsSheet from "./sheets/DirectionsSheet";
+import TipsSheet from "./sheets/TipsSheet";
 import WindowClosedFlow from "./WindowClosedFlow";
 import { useAppContext } from "@/lib/context/AppContext";
 import { isCycleExpired } from "@/lib/cycle/close";
+import { Logo } from "@/components/shared/Logo";
+import { ENTER_TRANSITION, EXIT_TRANSITION, MOTION_SPRING, TAP_SCALE, VIEW_TRANSITION } from "@/lib/motion/tokens";
 
 type ViewId = "home" | "window" | "later" | "profile";
 
@@ -38,12 +40,10 @@ const VIEW_BACKGROUNDS: Record<ViewId, string> = {
   profile: "bg-sand",
 };
 
-const TRANSITION = { duration: 0.46, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] };
-
 const viewVariants = {
-  enter: (dir: number) => ({ x: dir > 0 ? "100%" : "-35%" }),
-  center: { x: 0, transition: TRANSITION },
-  exit: (dir: number) => ({ x: dir > 0 ? "-12%" : "100%", transition: TRANSITION }),
+  enter: (dir: number) => ({ x: dir > 0 ? "100%" : "-35%", transition: ENTER_TRANSITION }),
+  center: { x: 0, transition: VIEW_TRANSITION },
+  exit: (dir: number) => ({ x: dir > 0 ? "-12%" : "100%", transition: EXIT_TRANSITION }),
 };
 
 function NavIcon({ id, active }: { id: ViewId; active: boolean }) {
@@ -81,7 +81,7 @@ export default function HomeApp() {
       window.setTimeout(() => context.openSheet("night-checkin"), 800);
       window.history.replaceState({}, "", "/home");
     }
-  }, []);
+  }, [context]);
 
   useEffect(() => {
     const check = () => {
@@ -103,16 +103,22 @@ export default function HomeApp() {
 
   return (
     <div className="fixed inset-0 w-full h-full overflow-hidden bg-parchment flex flex-col">
-      <div className="flex items-center gap-[6px] px-7 pt-[calc(14px+env(safe-area-inset-top))] shrink-0 z-10" style={{ background: "transparent" }}>
-        <motion.button whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} onClick={() => goView("home")} className={`font-gtw text-[13px] tracking-[-0.01em] px-[18px] py-2 rounded-full ${selectedTab === "home" ? "bg-ink text-parchment" : "bg-sand text-dusk"}`}>Today</motion.button>
-        <motion.button whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} onClick={() => goView("window")} className={`font-gtw text-[13px] tracking-[-0.01em] px-[18px] py-2 rounded-full ${selectedTab === "window" ? "bg-ink text-parchment" : "bg-sand text-dusk"}`}>Window</motion.button>
-        <motion.button whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} onClick={() => context.openSheet("add-move")} className="ml-auto w-[34px] h-[34px] rounded-full bg-sand text-dusk flex items-center justify-center">
-          <HugeiconsIcon icon={AddCircleIcon} size={18} color="#9E9485" strokeWidth={1.8} />
-        </motion.button>
+      <div className={`flex items-center justify-between px-7 pt-[calc(6px+env(safe-area-inset-top))] pb-[2px] shrink-0 z-10 ${VIEW_BACKGROUNDS[view]}`}>
+        <div className="flex items-center gap-[10px] shrink-0">
+          <Logo size={26} />
+          <span className="font-gtw text-[25px] tracking-[-0.01em] text-dusk">Align.</span>
+        </div>
+        <button
+          onClick={() => context.openSheet("tips")}
+          className="w-8 h-8 rounded-full bg-sand/80 border border-border flex items-center justify-center"
+          aria-label="Tips"
+        >
+          <HugeiconsIcon icon={AiIdeaIcon} size={16} color="#9E9485" strokeWidth={1.9} />
+        </button>
       </div>
 
       <div className="flex-1 relative overflow-hidden z-10">
-        <AnimatePresence initial={false} custom={direction} mode="sync">
+        <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.div key={view} custom={direction} variants={viewVariants} initial="enter" animate="center" exit="exit" className={`absolute inset-0 overflow-hidden ${VIEW_BACKGROUNDS[view]}`}>
             {renderView(view)}
           </motion.div>
@@ -124,7 +130,7 @@ export default function HomeApp() {
           {VIEW_ORDER.map((nav) => {
             const active = nav === selectedTab;
             return (
-              <motion.button key={nav} whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} onClick={() => goView(nav)} className={`flex-1 flex flex-col items-center gap-1 p-[8px_4px] rounded-full ${active ? "bg-white/10" : "bg-transparent"}`}>
+              <motion.button key={nav} whileTap={{ scale: TAP_SCALE.default }} transition={MOTION_SPRING.press} onClick={() => goView(nav)} className={`flex-1 flex flex-col items-center gap-1 p-[8px_4px] rounded-full ${active ? "bg-white/10" : "bg-transparent"}`}>
                 <NavIcon id={nav} active={active} />
                 <span className={`font-body text-[9px] font-medium tracking-[0.07em] uppercase ${active ? "text-parchment" : "text-white/30"}`}>{nav === "home" ? "Home" : nav[0].toUpperCase() + nav.slice(1)}</span>
               </motion.button>
@@ -141,8 +147,10 @@ export default function HomeApp() {
       <AddMoveSheet />
       <AddLaterSheet />
       <DirectionDetailSheet />
+      <DirectionsSheet />
       <LaterItemSheet />
       <DayDetailSheet />
+      <TipsSheet />
 
       {windowClosedVisible && context.currentCycle && context.userId ? (
         <WindowClosedFlow visible={windowClosedVisible} onComplete={() => { setWindowClosedVisible(false); void context.refresh(); }} />

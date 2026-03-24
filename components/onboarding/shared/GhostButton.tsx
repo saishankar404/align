@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
+import { MOTION_SPRING, TAP_SCALE } from "@/lib/motion/tokens";
 
 type GhostButtonProps = {
   onClick?: () => void;
@@ -13,8 +14,8 @@ export default function GhostButton({ onClick, children, className = "" }: Ghost
   return (
     <motion.button
       onClick={onClick}
-      whileTap={{ scale: 0.96 }}
-      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      whileTap={{ scale: TAP_SCALE.default }}
+      transition={MOTION_SPRING.press}
       className={`w-full py-[13px] text-center font-body text-[13px] ${className}`}
     >
       {children}

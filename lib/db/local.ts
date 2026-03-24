@@ -79,6 +79,15 @@ export interface LocalReflection {
   _synced: 0 | 1;
 }
 
+export interface LocalPendingDelete {
+  key: string;
+  table: "moves";
+  recordId: string;
+  userId: string;
+  createdAt: string;
+  attempts: number;
+}
+
 class AlignDB extends Dexie {
   profiles!: Table<LocalProfile, string>;
   cycles!: Table<LocalCycle, string>;
@@ -87,6 +96,7 @@ class AlignDB extends Dexie {
   checkins!: Table<LocalCheckin, string>;
   laterItems!: Table<LocalLaterItem, string>;
   reflections!: Table<LocalReflection, string>;
+  pendingDeletes!: Table<LocalPendingDelete, string>;
 
   constructor() {
     super("align_db");
@@ -107,6 +117,26 @@ class AlignDB extends Dexie {
       checkins: "id, userId, date, cycleId, _synced, [userId+date]",
       laterItems: "id, userId, dropped, promoted, _synced",
       reflections: "id, cycleId, userId, _synced",
+    });
+    this.version(3)
+      .stores({
+        profiles: "id",
+        cycles: "id, userId, status, _synced",
+        directions: "id, cycleId, userId, _synced, [cycleId+position]",
+        moves: "id, userId, date, cycleId, status, _synced, [userId+date]",
+        checkins: "id, userId, date, cycleId, _synced, [userId+date]",
+        laterItems: "id, userId, dropped, promoted, _synced",
+        reflections: "id, cycleId, userId, _synced",
+      });
+    this.version(4).stores({
+      profiles: "id",
+      cycles: "id, userId, status, _synced",
+      directions: "id, cycleId, userId, _synced, [cycleId+position]",
+      moves: "id, userId, date, cycleId, status, _synced, [userId+date]",
+      checkins: "id, userId, date, cycleId, _synced, [userId+date]",
+      laterItems: "id, userId, dropped, promoted, _synced",
+      reflections: "id, cycleId, userId, _synced",
+      pendingDeletes: "key, userId, table, recordId, [userId+table]",
     });
   }
 }

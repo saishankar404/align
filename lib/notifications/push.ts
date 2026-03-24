@@ -1,6 +1,7 @@
 "use client";
 
 import { db } from "@/lib/db/local";
+import { requestSyncIfCloud } from "@/lib/db/sync";
 
 export function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -33,6 +34,7 @@ export async function registerPushSubscription(userId: string): Promise<boolean>
     const json = JSON.stringify(subscription);
     localStorage.setItem("align_push_sub", json);
     await db.profiles.update(userId, { pushSubscription: json, notifEnabled: true });
+    requestSyncIfCloud(userId);
     return true;
   } catch {
     return false;

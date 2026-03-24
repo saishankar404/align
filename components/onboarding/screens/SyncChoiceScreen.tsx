@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
+import CheckmarkCircle02Icon from "@hugeicons/core-free-icons/dist/esm/CheckmarkCircle02Icon";
 import CtaButton from "../shared/CtaButton";
 import GhostButton from "../shared/GhostButton";
 import type { ScreenProps } from "../OnboardingFlow";
 import { textContainerVariants, textItemVariants } from "./textVariants";
+import { MOTION_SPRING, TAP_SCALE } from "@/lib/motion/tokens";
 
 type Choice = "cloud" | "local";
 
@@ -53,7 +54,8 @@ export default function SyncChoiceScreen({ startAuth, setData, chooseLocal, back
           return (
             <motion.button
               key={choice}
-              whileTap={{ scale: 0.985 }}
+              whileTap={{ scale: TAP_SCALE.soft }}
+              transition={MOTION_SPRING.press}
               onClick={() => {
                 setData((prev) => ({ ...prev, saveError: null }));
                 setSelected(choice as Choice);

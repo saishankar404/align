@@ -6,12 +6,16 @@ import CtaButton from "../shared/CtaButton";
 import GhostButton from "../shared/GhostButton";
 import type { ScreenProps } from "../OnboardingFlow";
 import { textContainerVariants, textItemVariants } from "./textVariants";
+import { Logo } from "@/components/shared/Logo";
 
 export default function Welcome({ startAuth, data, next }: ScreenProps) {
   return (
     <motion.div className="h-full bg-ink text-parchment flex flex-col px-8 pt-[52px] pb-[44px]" variants={textContainerVariants} initial="hidden" animate="show">
-      <motion.div className="font-gtw text-[32px] tracking-[-0.03em] text-center text-white/45" variants={textItemVariants}>
-        Align.
+      <motion.div className="flex items-center justify-center gap-[10px]" variants={textItemVariants}>
+        <div style={{ opacity: 0.2 }}>
+          <Logo size={22} />
+        </div>
+        <span className="font-gtw text-[32px] tracking-[-0.03em] text-center text-white/45">Align.</span>
       </motion.div>
 
       <motion.div className="flex-1 flex items-center justify-center min-h-0 relative" variants={textItemVariants}>

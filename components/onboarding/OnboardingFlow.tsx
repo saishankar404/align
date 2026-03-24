@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
+import ArrowLeft01Icon from "@hugeicons/core-free-icons/dist/esm/ArrowLeft01Icon";
 import { addDays, format } from "date-fns";
 import { db, type LocalProfile } from "@/lib/db/local";
-import { syncAllIfCloud } from "@/lib/db/sync";
+import { requestSyncIfCloud, syncAllIfCloud } from "@/lib/db/sync";
 import { supabase } from "@/lib/supabase/client";
 import { newId } from "@/lib/utils/ids";
 import {
@@ -28,6 +28,16 @@ import DirectionsScreen from "./screens/DirectionsScreen";
 import CycleScreen from "./screens/CycleScreen";
 import NotificationsScreen from "./screens/NotificationsScreen";
 import DoneScreen from "./screens/DoneScreen";
+import AnimatedAutoSize from "@/components/shared/AnimatedAutoSize";
+import {
+  ENTER_TRANSITION,
+  EXIT_TRANSITION,
+  MOTION_DURATION,
+  MOTION_EASE,
+  MOTION_SPRING,
+  TAP_SCALE,
+  VIEW_TRANSITION,
+} from "@/lib/motion/tokens";
 
 export type OnboardingData = {
   name: string;
@@ -66,20 +76,15 @@ const FIRST_STORY_STEP = 2;
 const screenVariants = {
   enter: (dir: number) => ({
     x: dir > 0 ? "100%" : "-35%",
+    transition: ENTER_TRANSITION,
   }),
   center: {
     x: 0,
-    transition: {
-      duration: 0.46,
-      ease: [0.22, 1, 0.36, 1] as const,
-    },
+    transition: VIEW_TRANSITION,
   },
   exit: (dir: number) => ({
     x: dir > 0 ? "-12%" : "100%",
-    transition: {
-      duration: 0.46,
-      ease: [0.22, 1, 0.36, 1] as const,
-    },
+    transition: EXIT_TRANSITION,
   }),
 };
 
@@ -469,7 +474,7 @@ export default function OnboardingFlow() {
 
       localStorage.setItem("align_onboarded", "true");
       if (isCloudMode()) {
-        syncAllIfCloud(userId).catch(() => undefined);
+        requestSyncIfCloud(userId);
       }
       persisted = true;
     } catch {
@@ -527,8 +532,9 @@ export default function OnboardingFlow() {
               {linkState.message ?? "Working on it..."}
             </p>
           </div>
-          {linkState.status === "conflict" && linkState.localUserId && linkState.cloudUserId ? (
-            <div className="space-y-2">
+          <AnimatedAutoSize className="w-full" transition={{ duration: MOTION_DURATION.smallState, ease: MOTION_EASE.easeInOut, delay: 0.05 }}>
+            {linkState.status === "conflict" && linkState.localUserId && linkState.cloudUserId ? (
+              <div className="space-y-2">
               <button
                 onClick={() => {
                   void completeLinkWithLocal(linkState.localUserId as string, linkState.cloudUserId as string);
@@ -545,45 +551,50 @@ export default function OnboardingFlow() {
               >
                 Use cloud data
               </button>
-            </div>
-          ) : (
-            <div className="font-body text-[13px] text-white/35">Please wait...</div>
-          )}
+              </div>
+            ) : (
+              <div className="font-body text-[13px] text-white/35">Please wait...</div>
+            )}
+          </AnimatedAutoSize>
         </div>
       ) : null}
 
       {showTopUI && (
         <>
           {showProgress ? (
-            <div className="absolute top-[54px] left-8 right-8 h-[2px] bg-ink/10 rounded-[2px] z-50">
+            <div className="absolute top-[calc(var(--sat)+12px)] left-8 right-8 h-[2px] bg-ink/10 rounded-[2px] z-50">
               <motion.div
                 className="h-full bg-ink rounded-[2px]"
                 animate={{ width: `${((progressStep - 1) / 4) * 100}%` }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: MOTION_DURATION.smallState, ease: MOTION_EASE.linear }}
               />
             </div>
           ) : null}
 
-          <div className="absolute top-[62px] left-7 right-7 flex justify-between items-center z-[51]">
+          <div className="absolute top-[calc(var(--sat)+18px)] left-7 right-7 z-[51]">
+            <div className="grid grid-cols-[44px_1fr_72px] items-center">
             <motion.button
-              whileTap={{ scale: 0.96 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              whileTap={{ scale: TAP_SCALE.default }}
+              transition={MOTION_SPRING.press}
               onClick={back}
-              className={`bg-transparent border-none text-[13px] ${topTextColor} ${step > 0 ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+              className={`h-11 w-11 flex items-center justify-start bg-transparent border-none text-[13px] min-hit-target touch-hit-area ${topTextColor} ${step > 0 ? "opacity-100" : "opacity-0 pointer-events-none"}`}
             >
               <HugeiconsIcon icon={ArrowLeft01Icon} size={18} color={topStrokeColor} strokeWidth={2} />
             </motion.button>
 
+            <div />
+
             <motion.button
-              whileTap={{ scale: 0.96 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              whileTap={{ scale: TAP_SCALE.default }}
+              transition={MOTION_SPRING.press}
               onClick={next}
-              className={`bg-transparent border-none text-[13px] ${topTextColor} ${
+              className={`h-11 min-hit-target touch-hit-area justify-self-end bg-transparent border-none text-[13px] ${topTextColor} ${
                 step < 8 && step !== 5 ? "opacity-100" : "opacity-0 pointer-events-none"
               }`}
             >
               Skip
             </motion.button>
+            </div>
           </div>
         </>
       )}

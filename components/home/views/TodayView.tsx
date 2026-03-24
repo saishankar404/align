@@ -9,7 +9,7 @@ import SectionHeader from "@/components/home/shared/SectionHeader";
 import { useAppContext } from "@/lib/context/AppContext";
 import { useLenis } from "@/hooks/useLenis";
 import { db } from "@/lib/db/local";
-import { syncAllIfCloud } from "@/lib/db/sync";
+import { deleteMoveWithTombstone, requestSyncIfCloud } from "@/lib/db/sync";
 
 const dirColorClass = {
   terra: "bg-terra",
@@ -52,7 +52,6 @@ export default function TodayView({ onOpenLaterTab }: TodayViewProps) {
         : `${remaining} move${remaining > 1 ? "s" : ""} left. ${["", "Let's get moving.", "You're moving forward.", "Almost there."][done] ?? ""}`;
 
   const infoSub = `${done} of ${total} done today. Day ${context.currentDay} of ${cycle.lengthDays}.`;
-  const progress = `${((context.currentDay / cycle.lengthDays) * 100).toFixed(1)}%`;
   const dayLabel = `Day ${context.currentDay} of ${cycle.lengthDays} · ${format(parseISO(cycle.startDate), "MMM d")} – ${format(parseISO(cycle.endDate), "MMM d")}`;
 
   const sortedLater = [...context.laterItems].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -64,30 +63,37 @@ export default function TodayView({ onOpenLaterTab }: TodayViewProps) {
     const now = new Date().toISOString();
     await db.moves.update(moveId, { status: "pending", doneAt: undefined, updatedAt: now, _synced: 0 });
     await context.refresh();
-    syncAllIfCloud(context.userId).catch(() => undefined);
+    requestSyncIfCloud(context.userId);
+  };
+
+  const handleDeleteMove = async (id: string) => {
+    if (!context.userId) return;
+    await deleteMoveWithTombstone(context.userId, id);
+    await context.refresh();
+    requestSyncIfCloud(context.userId);
   };
 
   const showNightCTA = new Date().getHours() >= 18 && !context.todayCheckin;
 
   return (
-    <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div ref={scrollRef} data-scroll-container className="h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div className="px-7 pb-24">
-        <div className="pt-[22px] flex justify-between items-end">
-          <div>
+        <div className="pt-[8px] flex justify-between items-start">
+          <div className="pl-[6px] pt-[8px]">
             <div className="font-body text-[10px] font-medium tracking-[0.12em] uppercase text-dusk mb-[6px]">{greeting}</div>
             <div className="font-gtw text-[52px] font-normal tracking-[-0.04em] leading-[0.9] text-ink">{context.profile?.name ?? ""}</div>
           </div>
-          <div className="flex flex-col items-end gap-2 pb-1">
+          <div className="flex flex-col items-end gap-2 pt-[2px]">
             <div className="font-gtw text-[84px] font-light tracking-[-0.06em] leading-[0.9] text-ink opacity-[.07]">{String(context.currentDay).padStart(2, "0")}</div>
             <DotRow currentDay={context.currentDay} lengthDays={cycle.lengthDays} />
           </div>
         </div>
 
-        <InfoCard title={infoTitle} subtitle={infoSub} dayLabel={dayLabel} progress={progress} onClick={() => context.openSheet("today-info")} />
+        <InfoCard title={infoTitle} subtitle={infoSub} dayLabel={dayLabel} onClick={() => context.openSheet("today-info")} />
 
         <SectionHeader label="Today" title="Moves" count={`${done}/${total}`} paddingTop={28} />
 
-        <div className="pt-[10px] flex flex-col gap-[10px]">
+        <div className="pt-[14px] flex flex-col gap-[12px]">
           {context.todayMoves.map((move, index) => {
             const direction = context.directions.find((item) => item.id === move.directionId);
             return (
@@ -108,27 +114,30 @@ export default function TodayView({ onOpenLaterTab }: TodayViewProps) {
                   }
                   void toggleDoneToPending(move.id);
                 }}
+                onDelete={(id) => {
+                  void handleDeleteMove(id);
+                }}
               />
             );
           })}
         </div>
 
         {context.todayMoves.length < 3 ? (
-          <button onClick={() => context.openSheet("add-move")} className="flex items-center gap-[10px] pt-3 text-left">
+          <button onClick={() => context.openSheet("add-move")} className="flex items-center gap-[10px] pt-[14px] text-left min-hit-target touch-hit-area">
             <span className="w-[22px] h-[22px] rounded-full border-[1.5px] border-dashed border-bs flex items-center justify-center text-[15px] text-bs">+</span>
             <span className="font-body text-[13px] text-dusk">Add a {nextMoveWord} move</span>
           </button>
         ) : (
-          <div className="pt-3 font-body text-[11px] text-dusk">3 moves in. window&apos;s full.</div>
+          <div className="pt-[14px] font-body text-[11px] text-dusk">3 moves in. window&apos;s full.</div>
         )}
 
         <SectionHeader label="This cycle" title="Directions" count={String(context.directions.length)} />
-        <div>
+        <div className="border-y border-border">
           {context.directions.map((direction, index) => (
             <button
               key={direction.id}
               onClick={() => context.openSheet("direction-detail", { direction })}
-              className={`w-full flex items-center py-[13px] ${index === 0 ? "" : ""}`}
+              className={`w-full flex items-center py-[16px] ${index !== context.directions.length - 1 ? "border-b border-border" : ""}`}
             >
               <span className="font-gtw text-[11px] font-light text-dusk min-w-7 text-left">{String(direction.position).padStart(2, "0")}</span>
               <span className="font-gtw text-[20px] tracking-[-0.02em] text-ink flex-1 text-left leading-[1.1]">{direction.title}</span>
@@ -140,9 +149,13 @@ export default function TodayView({ onOpenLaterTab }: TodayViewProps) {
         {sortedLater.length > 0 ? (
           <>
             <SectionHeader label="Not now" title="Later pile" count={String(sortedLater.length)} />
-            <div>
-              {peekLater.map((item) => (
-                <button key={item.id} onClick={() => context.openSheet("later-item", { item })} className="w-full flex items-center gap-[10px] py-3">
+            <div className="border-y border-border">
+              {peekLater.map((item, index) => (
+                <button
+                  key={item.id}
+                  onClick={() => context.openSheet("later-item", { item })}
+                  className={`w-full flex items-center gap-[10px] py-[14px] ${index !== peekLater.length - 1 ? "border-b border-border" : ""}`}
+                >
                   <span className={`font-body text-[8px] font-medium tracking-[0.1em] uppercase text-parchment rounded-full px-2 py-[3px] ${item.type === "link" ? "bg-slate" : "bg-terra"}`}>
                     {item.type === "link" ? "Link" : "Idea"}
                   </span>
@@ -150,14 +163,14 @@ export default function TodayView({ onOpenLaterTab }: TodayViewProps) {
                 </button>
               ))}
               {sortedLater.length > 3 ? (
-                <button onClick={onOpenLaterTab} className="pt-[10px] font-body text-[11px] text-dusk">+ {sortedLater.length - 3} more &nbsp;›</button>
+                <button onClick={onOpenLaterTab} className="pt-[10px] font-body text-[11px] text-dusk min-hit-target touch-hit-area">+ {sortedLater.length - 3} more &nbsp;›</button>
               ) : null}
             </div>
           </>
         ) : null}
 
         {showNightCTA ? (
-          <button onClick={() => context.openSheet("night-checkin")} className="w-full mt-5 bg-ink rounded-[18px] p-5 flex items-center justify-between">
+          <button onClick={() => context.openSheet("night-checkin")} className="w-full mt-7 bg-ink rounded-[20px] p-[22px] flex items-center justify-between">
             <div className="text-left">
               <div className="font-body text-[9px] font-medium tracking-[0.12em] uppercase text-white/30 mb-1">Tonight</div>
               <div className="font-gtw text-[20px] tracking-[-0.02em] leading-[1.2] text-parchment">Did you show up today?</div>
@@ -165,7 +178,7 @@ export default function TodayView({ onOpenLaterTab }: TodayViewProps) {
             <span className="w-[38px] h-[38px] rounded-full bg-white/10 flex items-center justify-center text-white">→</span>
           </button>
         ) : resultCard ? (
-          <div className={`w-full mt-5 rounded-[18px] p-5 ${resultCard.tone}`}>
+          <div className={`w-full mt-7 rounded-[20px] p-[22px] ${resultCard.tone}`}>
             <div className="font-gtw text-[20px] tracking-[-0.02em] leading-[1.2]">{resultCard.title}</div>
           </div>
         ) : null}

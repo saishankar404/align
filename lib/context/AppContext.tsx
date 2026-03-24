@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { differenceInDays, parseISO, startOfDay } from "date-fns";
 import {
   db,
   type LocalCheckin,
@@ -18,9 +19,9 @@ import {
   type LocalMove,
   type LocalProfile,
 } from "@/lib/db/local";
-import { syncAllIfCloud } from "@/lib/db/sync";
+import { requestSyncIfCloud } from "@/lib/db/sync";
 import { supabase } from "@/lib/supabase/client";
-import { cycleDay, todayStr } from "@/lib/utils/dates";
+import { todayStr } from "@/lib/utils/dates";
 import { getActiveUserId, isCloudMode } from "@/lib/identity/client";
 
 export type SheetName =
@@ -29,8 +30,10 @@ export type SheetName =
   | "night-checkin"
   | "avoided"
   | "today-info"
+  | "tips"
   | "add-move"
   | "add-later"
+  | "directions"
   | "direction-detail"
   | "later-item"
   | "day-detail";
@@ -38,11 +41,14 @@ export type SheetName =
 interface AppState {
   profile: LocalProfile | null;
   currentCycle: LocalCycle | null;
+  allCycles: LocalCycle[];
   directions: LocalDirection[];
   todayMoves: LocalMove[];
   allMovesThisCycle: LocalMove[];
+  allMoves: LocalMove[];
   todayCheckin: LocalCheckin | null;
   checkinsThisCycle: LocalCheckin[];
+  allCheckins: LocalCheckin[];
   laterItems: LocalLaterItem[];
   allLaterItems: LocalLaterItem[];
   currentDay: number;
@@ -65,11 +71,14 @@ const AppContext = createContext<AppContextValue | null>(null);
 const INITIAL_STATE: AppState = {
   profile: null,
   currentCycle: null,
+  allCycles: [],
   directions: [],
   todayMoves: [],
   allMovesThisCycle: [],
+  allMoves: [],
   todayCheckin: null,
   checkinsThisCycle: [],
+  allCheckins: [],
   laterItems: [],
   allLaterItems: [],
   currentDay: 1,
@@ -89,24 +98,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, isLoading: true }));
 
     const profile = await db.profiles.get(userId);
-    const cycle = await db.cycles
-      .where("status")
-      .equals("active")
-      .and((c) => c.userId === userId)
-      .first();
+    const allCycles = (await db.cycles.where("userId").equals(userId).toArray()).sort((a, b) =>
+      a.startDate.localeCompare(b.startDate)
+    );
+    const cycle = allCycles.find((item) => item.status === "active") ?? null;
 
     if (!cycle) {
+      const [allMoves, allCheckins, allLater] = await Promise.all([
+        db.moves.where("userId").equals(userId).toArray(),
+        db.checkins.where("userId").equals(userId).toArray(),
+        db.laterItems.where("userId").equals(userId).toArray(),
+      ]);
+
       setState((prev) => ({
         ...prev,
         profile: profile ?? null,
         currentCycle: null,
+        allCycles,
         directions: [],
         todayMoves: [],
         allMovesThisCycle: [],
+        allMoves,
         todayCheckin: null,
         checkinsThisCycle: [],
+        allCheckins,
         laterItems: [],
-        allLaterItems: [],
+        allLaterItems: allLater,
         currentDay: 1,
         daysRemaining: 0,
         isLoading: false,
@@ -117,7 +134,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const today = todayStr();
 
-    const [directions, todayMoves, allMoves, todayCheckin, allCheckins, laterItems, allLater] = await Promise.all([
+    const [directions, todayMoves, allMovesThisCycle, todayCheckin, checkinsThisCycle, laterItems, allLaterItems, allMoves, allCheckins] = await Promise.all([
       db.directions.where("cycleId").equals(cycle.id).sortBy("position"),
       db.moves.where("[userId+date]").equals([userId, today]).toArray(),
       db.moves.where("cycleId").equals(cycle.id).toArray(),
@@ -125,22 +142,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       db.checkins.where("cycleId").equals(cycle.id).toArray(),
       db.laterItems.where("userId").equals(userId).filter((item) => !item.dropped && !item.promoted).toArray(),
       db.laterItems.where("userId").equals(userId).toArray(),
+      db.moves.where("userId").equals(userId).toArray(),
+      db.checkins.where("userId").equals(userId).toArray(),
     ]);
 
-    const currentDay = Math.min(cycle.lengthDays, cycleDay(cycle.startDate));
+    const raw = differenceInDays(startOfDay(new Date()), startOfDay(parseISO(cycle.startDate))) + 1;
+    const currentDay = Math.min(Math.max(1, raw), cycle.lengthDays);
     const daysRemaining = Math.max(0, cycle.lengthDays - currentDay);
 
     setState((prev) => ({
       ...prev,
       profile: profile ?? null,
       currentCycle: cycle,
+      allCycles,
       directions,
       todayMoves,
-      allMovesThisCycle: allMoves,
+      allMovesThisCycle,
+      allMoves,
       todayCheckin: todayCheckin ?? null,
-      checkinsThisCycle: allCheckins,
+      checkinsThisCycle,
+      allCheckins,
       laterItems,
-      allLaterItems: allLater,
+      allLaterItems,
       currentDay,
       daysRemaining,
       isLoading: false,
@@ -148,7 +171,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
 
     if (navigator.onLine && isCloudMode()) {
-      syncAllIfCloud(userId).catch(() => undefined);
+      requestSyncIfCloud(userId);
     }
   }, []);
 

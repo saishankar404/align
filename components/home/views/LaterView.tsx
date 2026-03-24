@@ -21,7 +21,7 @@ export default function LaterView({ windowClosedReview = false, onItemAction }: 
     <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div className="pb-24">
         <div className="pt-7 px-7">
-          <div className="font-gtw text-[44px] font-light tracking-[-0.04em] leading-[0.95] text-ink">Later<br />pile</div>
+          <div className="font-gtw text-[48px] font-light tracking-[-0.04em] leading-[0.96] text-ink whitespace-nowrap">Later pile</div>
           <div className="font-body text-[12px] text-dusk leading-[1.6] mt-2">{context.laterItems.length} items. Not now, but not lost.</div>
         </div>
 
@@ -54,8 +54,8 @@ export default function LaterView({ windowClosedReview = false, onItemAction }: 
                   {item.note ? <div className="font-body text-[11px] text-dusk leading-[1.55]">{item.note}</div> : null}
                   {windowClosedReview ? (
                     <div className="mt-2 flex gap-2">
-                      <button onClick={() => onItemAction?.(item.id, "promote")} className="px-3 py-1 bg-ink text-parchment rounded-full text-xs">Bring forward</button>
-                      <button onClick={() => onItemAction?.(item.id, "drop")} className="px-3 py-1 bg-parchment text-ink rounded-full text-xs border border-border">Drop</button>
+                      <button onClick={() => onItemAction?.(item.id, "promote")} className="px-3 py-1 bg-ink text-parchment rounded-full text-xs min-hit-target touch-hit-area">Bring forward</button>
+                      <button onClick={() => onItemAction?.(item.id, "drop")} className="px-3 py-1 bg-parchment text-ink rounded-full text-xs border border-border min-hit-target touch-hit-area">Drop</button>
                     </div>
                   ) : null}
                 </div>
@@ -77,8 +77,8 @@ export default function LaterView({ windowClosedReview = false, onItemAction }: 
                   {item.note ? <div className="font-body text-[11px] text-dusk leading-[1.55]">{item.note}</div> : null}
                   {windowClosedReview ? (
                     <div className="mt-2 flex gap-2">
-                      <button onClick={() => onItemAction?.(item.id, "promote")} className="px-3 py-1 bg-ink text-parchment rounded-full text-xs">Bring forward</button>
-                      <button onClick={() => onItemAction?.(item.id, "drop")} className="px-3 py-1 bg-parchment text-ink rounded-full text-xs border border-border">Drop</button>
+                      <button onClick={() => onItemAction?.(item.id, "promote")} className="px-3 py-1 bg-ink text-parchment rounded-full text-xs min-hit-target touch-hit-area">Bring forward</button>
+                      <button onClick={() => onItemAction?.(item.id, "drop")} className="px-3 py-1 bg-parchment text-ink rounded-full text-xs border border-border min-hit-target touch-hit-area">Drop</button>
                     </div>
                   ) : null}
                 </div>

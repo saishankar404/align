@@ -88,12 +88,27 @@ body,
 body {
   font-family: "Satoshi", sans-serif;
   -webkit-font-smoothing: antialiased;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 input,
 textarea,
 button {
   font: inherit;
+}
+
+input,
+textarea,
+[contenteditable="true"],
+.allow-select {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* onboarding/home reusable keyframes */
@@ -228,4 +243,20 @@ button {
 
 .navbar-safe {
   padding-bottom: calc(var(--sab) + 8px);
+}
+
+/* ux-fitts-target-size + ux-fitts-hit-area helpers */
+.min-hit-target {
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.touch-hit-area {
+  position: relative;
+}
+
+.touch-hit-area::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
 }

@@ -6,7 +6,7 @@ import { useAppContext } from "@/lib/context/AppContext";
 import { db } from "@/lib/db/local";
 import { newId } from "@/lib/utils/ids";
 import { todayStr } from "@/lib/utils/dates";
-import { syncAllIfCloud } from "@/lib/db/sync";
+import { requestSyncIfCloud } from "@/lib/db/sync";
 
 export default function AddMoveSheet() {
   const context = useAppContext();
@@ -32,7 +32,12 @@ export default function AddMoveSheet() {
 
   const save = async () => {
     if (!context.userId || !context.currentCycle) return;
-    if (context.todayMoves.length >= 3) return;
+    const moveCount = await db.moves.where("[userId+date]").equals([context.userId, todayStr()]).count();
+    if (moveCount >= 3) {
+      setError("3 moves max for today. Window's full.");
+      await context.refresh();
+      return;
+    }
     if (!canSave || !selectedDirection) {
       setError("Add a title and pick a direction.");
       return;
@@ -57,7 +62,7 @@ export default function AddMoveSheet() {
 
     await context.refresh();
     context.closeSheet();
-    syncAllIfCloud(context.userId).catch(() => undefined);
+    requestSyncIfCloud(context.userId);
     setLoading(false);
     setTitle("");
   };
