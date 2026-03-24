@@ -451,16 +451,16 @@ export default function LandingPage() {
         className="landing-grain min-h-screen bg-zinc-950 font-body text-zinc-50 selection:bg-indigo-500/30 selection:text-indigo-200"
       >
         <div className="landing-content">
-          <nav className="fixed left-1/2 top-8 z-50 flex w-[540px] max-w-[90vw] -translate-x-1/2 items-center justify-between rounded-full border border-white/5 bg-[#161616] px-1.5 py-1.5 pr-2.5 shadow-2xl">
-            <div className="ml-1 flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center">
+          <nav className="fixed left-1/2 top-4 z-50 flex w-[min(540px,calc(100vw-20px))] -translate-x-1/2 flex-col gap-3 rounded-[2rem] border border-white/5 bg-[#161616]/95 px-3 py-3 shadow-2xl backdrop-blur sm:top-8 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:rounded-full sm:px-1.5 sm:py-1.5 sm:pr-2.5">
+            <div className="ml-1 flex items-center gap-2.5 self-start sm:self-auto">
+              <div className="flex h-8 w-8 items-center justify-center sm:h-8 sm:w-8">
                 <Logo size={30} src="/logo_secondary.svg" priority />
               </div>
-              <span className="font-gtw text-[22px] leading-none tracking-[-0.03em] text-white">
+              <span className="font-gtw text-[20px] leading-none tracking-[-0.03em] text-white sm:text-[22px]">
                 Align.
               </span>
             </div>
-            <div className="flex items-center gap-6 text-[14px] font-medium text-zinc-300">
+            <div className="flex w-full items-center justify-between gap-3 text-[13px] font-medium text-zinc-300 sm:w-auto sm:justify-start sm:gap-6 sm:text-[14px]">
               <Link href="/method" className="transition-colors hover:text-white">
                 {COPY.nav.left}
               </Link>
@@ -469,7 +469,7 @@ export default function LandingPage() {
               </a>
               <Link
                 href="/app"
-                className="rounded-full border border-white/5 bg-[#282828] px-5 py-1.5 font-medium text-white transition-colors hover:bg-[#333]"
+                className="rounded-full border border-white/5 bg-[#282828] px-4 py-2 text-center font-medium text-white transition-colors hover:bg-[#333] sm:px-5 sm:py-1.5"
               >
                 {COPY.nav.cta}
               </Link>
@@ -478,19 +478,19 @@ export default function LandingPage() {
 
           <div className="relative isolate z-20 overflow-hidden rounded-b-[3.5rem] bg-[#F2EDE4] pb-20 text-zinc-900 shadow-[0_30px_80px_rgba(0,0,0,0.18)] md:rounded-b-[5.5rem]">
             <UnicornHeroBackground />
-            <header className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-6 pb-12 pt-48 text-center">
-              <div className="reveal mb-8 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-600">
+            <header className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-5 pb-10 pt-40 text-center sm:px-6 sm:pb-12 sm:pt-48">
+              <div className="reveal mb-7 inline-flex max-w-full items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-center text-[12px] font-medium text-indigo-600 sm:mb-8 sm:text-sm">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-600" />
                 </span>
                 {COPY.hero.badge}
               </div>
-              <h1 className="reveal stagger-1 mb-6 text-5xl font-bold leading-[1.1] tracking-tighter text-zinc-900 md:text-7xl">
+              <h1 className="reveal stagger-1 mb-6 text-[2.8rem] font-bold leading-[1.02] tracking-tighter text-zinc-900 sm:text-5xl md:text-7xl">
                 {COPY.hero.titleLine1} <br className="hidden md:block" /> {COPY.hero.titleLine2}
               </h1>
-              <p className="reveal stagger-2 mb-10 max-w-2xl text-lg text-zinc-600 md:text-xl">{COPY.hero.subtitle}</p>
-              <div className="reveal stagger-3 flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
+              <p className="reveal stagger-2 mb-10 max-w-2xl px-1 text-[16px] leading-[1.65] text-zinc-600 sm:text-lg md:text-xl">{COPY.hero.subtitle}</p>
+              <div className="reveal stagger-3 flex w-full max-w-md flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:gap-4">
                 <Link
                   href="/app"
                   className="w-full rounded-full bg-zinc-900 px-8 py-4 text-center font-medium text-white transition-transform hover:scale-105 sm:w-auto"
@@ -506,15 +506,15 @@ export default function LandingPage() {
               </div>
             </header>
 
-            <div className="reveal stagger-3 relative z-10 mx-auto mb-[-120px] mt-14 flex w-full max-w-6xl items-end justify-center overflow-visible">
-              <div className="animate-pulse-glow absolute left-1/2 top-[44%] h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#B8AEE0]/45 blur-[90px]" />
+            <div className="reveal stagger-3 relative z-10 mx-auto mb-[-72px] mt-10 flex w-full max-w-6xl items-end justify-center overflow-visible sm:mb-[-96px] sm:mt-14 md:mb-[-120px]">
+              <div className="animate-pulse-glow absolute left-1/2 top-[44%] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#B8AEE0]/45 blur-[70px] sm:h-72 sm:w-72 sm:blur-[80px] md:h-80 md:w-80 md:blur-[90px]" />
               <div
-                className="animate-pulse-glow absolute right-[28%] top-[36%] h-72 w-72 rounded-full bg-[#E8694A]/20 blur-[70px]"
+                className="animate-pulse-glow absolute right-[18%] top-[36%] h-48 w-48 rounded-full bg-[#E8694A]/20 blur-[52px] sm:right-[24%] sm:h-60 sm:w-60 sm:blur-[60px] md:right-[28%] md:h-72 md:w-72 md:blur-[70px]"
                 style={{ animationDelay: "1s" }}
               />
 
-              <div className="relative z-10 flex h-[520px] w-[420px] items-start justify-center overflow-hidden bg-transparent md:h-[590px] md:w-[470px]">
-                <div className="relative h-[860px] w-full rounded-[4.2rem] bg-[linear-gradient(145deg,#3b3b3f_0%,#17171a_14%,#545458_32%,#111215_52%,#4b4b50_74%,#1a1b1f_100%)] p-[8px] shadow-[0_70px_160px_rgba(0,0,0,0.5)]">
+              <div className="relative z-10 flex h-[420px] w-[min(420px,calc(100vw-30px))] items-start justify-center overflow-hidden bg-transparent sm:h-[500px] md:h-[590px] md:w-[470px]">
+                <div className="relative h-[760px] w-full rounded-[3.2rem] bg-[linear-gradient(145deg,#3b3b3f_0%,#17171a_14%,#545458_32%,#111215_52%,#4b4b50_74%,#1a1b1f_100%)] p-[7px] shadow-[0_50px_120px_rgba(0,0,0,0.44)] sm:h-[820px] sm:rounded-[3.8rem] md:h-[860px] md:rounded-[4.2rem] md:p-[8px] md:shadow-[0_70px_160px_rgba(0,0,0,0.5)]">
                   <div className="absolute left-[-3px] top-[138px] h-14 w-[4px] rounded-r-full bg-[#6a6a70]" />
                   <div className="absolute left-[-3px] top-[204px] h-20 w-[4px] rounded-r-full bg-[#6a6a70]" />
                   <div className="absolute left-[-3px] top-[304px] h-20 w-[4px] rounded-r-full bg-[#6a6a70]" />
@@ -640,7 +640,7 @@ export default function LandingPage() {
                         </div>
                       </div>
 
-                      <div className="absolute bottom-0 left-0 right-0 px-5 pb-[26px] pt-14">
+                      <div className="absolute bottom-0 left-0 right-0 px-4 pb-[22px] pt-14 sm:px-5 sm:pb-[26px]">
                         <div className="rounded-full bg-ink p-[8px_6px] shadow-[0_12px_40px_rgba(0,0,0,.28)]">
                           <div className="flex items-center">
                             {[
@@ -675,14 +675,14 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <main className="relative z-10 -mt-[96px] bg-[#D8D1F6] pt-[110px]">
+          <main className="relative z-10 -mt-[64px] bg-[#D8D1F6] pt-[88px] sm:-mt-[80px] sm:pt-[96px] md:-mt-[96px] md:pt-[110px]">
             <section ref={scrollTextSectionRef} className="relative h-[200vh] w-full">
               <div ref={scrollTextInnerRef} className="sticky top-0 flex h-screen w-full items-center justify-center overflow-hidden px-6">
                 <div
-                  className="font-body max-w-5xl text-center text-3xl font-bold leading-[1.05] tracking-tighter md:text-5xl lg:text-7xl"
+                  className="font-body max-w-5xl text-center text-[2rem] font-bold leading-[1.02] tracking-tighter sm:text-4xl md:text-5xl lg:text-7xl"
                 >
                   {scrollLines.map((line, lineIndex) => (
-                    <div key={`line-${lineIndex}`} className="mb-[0.14em] block whitespace-nowrap last:mb-0">
+                    <div key={`line-${lineIndex}`} className="mb-[0.14em] block whitespace-normal last:mb-0 md:whitespace-nowrap">
                       {line.map((word, wordIndex) => {
                         const flatIndex =
                           scrollLines.slice(0, lineIndex).reduce((count, currentLine) => count + currentLine.length, 0) +
@@ -708,8 +708,8 @@ export default function LandingPage() {
             </section>
           </main>
 
-          <div className="relative z-20 -mt-[88px] rounded-t-[3.5rem] bg-zinc-950 pt-[120px] shadow-[0_-24px_60px_rgba(0,0,0,0.24)] md:rounded-t-[5.5rem]">
-            <section className="relative z-0 mx-auto max-w-[1200px] px-6 pb-32">
+          <div className="relative z-20 -mt-[56px] rounded-t-[3rem] bg-zinc-950 pt-[88px] shadow-[0_-24px_60px_rgba(0,0,0,0.24)] sm:-mt-[72px] sm:pt-[100px] md:-mt-[88px] md:rounded-t-[5.5rem] md:pt-[120px]">
+            <section className="relative z-0 mx-auto max-w-[1200px] px-5 pb-24 sm:px-6 sm:pb-32">
               <div className="reveal mb-12 flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-end">
                 <h2 className="max-w-2xl text-[2.5rem] font-medium leading-[1.1] tracking-tight text-white md:text-5xl">
                   {COPY.featureShowcase.title}
@@ -722,7 +722,7 @@ export default function LandingPage() {
                   </p>
                   <a
                     href="/app"
-                    className="flex items-center gap-2 rounded-full border border-zinc-800 bg-[#161616] px-4 py-2.5 text-[13px] font-medium text-zinc-300 shadow-sm transition-colors hover:bg-[#222] hover:text-white"
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-zinc-800 bg-[#161616] px-4 py-3 text-[13px] font-medium text-zinc-300 shadow-sm transition-colors hover:bg-[#222] hover:text-white sm:w-auto"
                   >
                     <Download className="h-4 w-4" />
                     {COPY.featureShowcase.cta}
@@ -732,7 +732,7 @@ export default function LandingPage() {
 
               <div className="reveal stagger-1 rounded-[2.5rem] border border-zinc-800/80 bg-[#0c0c0c] p-3">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <div className="group flex h-[480px] flex-col overflow-hidden rounded-[2rem] border border-zinc-800/80 bg-[#121212]">
+                  <div className="group flex min-h-[420px] flex-col overflow-hidden rounded-[2rem] border border-zinc-800/80 bg-[#121212] md:h-[480px]">
                     <div className="relative flex w-full flex-1 items-center justify-center overflow-hidden bg-[#121212]">
                       <svg
                         width="100%"
@@ -772,7 +772,7 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <div className="group flex h-[480px] flex-col overflow-hidden rounded-[2rem] border border-zinc-800/80 bg-[#121212]">
+                  <div className="group flex min-h-[420px] flex-col overflow-hidden rounded-[2rem] border border-zinc-800/80 bg-[#121212] md:h-[480px]">
                     <div className="relative flex w-full flex-1 items-center justify-center overflow-hidden bg-[#121212]">
                       <svg
                         width="100%"
@@ -802,7 +802,7 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <div className="group relative flex h-[480px] flex-col overflow-hidden rounded-[2rem] border border-zinc-800/80 bg-[#121212]">
+                  <div className="group relative flex min-h-[420px] flex-col overflow-hidden rounded-[2rem] border border-zinc-800/80 bg-[#121212] md:h-[480px]">
                     <div className="relative flex w-full flex-1 items-center justify-center overflow-hidden bg-[#121212]">
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(240,112,83,0.1),transparent_60%)]" />
                       <div
@@ -821,7 +821,7 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <div className="group flex h-[480px] flex-col overflow-hidden rounded-[2rem] border border-zinc-800/80 bg-[#121212]">
+                  <div className="group flex min-h-[420px] flex-col overflow-hidden rounded-[2rem] border border-zinc-800/80 bg-[#121212] md:h-[480px]">
                     <div className="relative flex w-full flex-1 items-center justify-center overflow-hidden bg-[#121212]">
                       <svg
                         width="100%"
@@ -859,7 +859,7 @@ export default function LandingPage() {
             </section>
           </div>
 
-          <section className="relative z-0 mx-auto max-w-6xl px-6 pb-16 pt-28">
+          <section className="relative z-0 mx-auto max-w-6xl px-5 pb-16 pt-24 sm:px-6 sm:pt-28">
             <div className="reveal mb-12">
               <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-500">{COPY.bento.titleEyebrow}</h3>
               <h2 className="text-4xl font-medium tracking-tight text-white md:text-5xl">{COPY.bento.title}</h2>
@@ -880,7 +880,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="reveal stagger-2 relative col-span-12 flex flex-col justify-between overflow-hidden rounded-[2rem] bg-[#212121] p-8 md:col-span-7">
+              <div className="reveal stagger-2 relative col-span-12 flex flex-col justify-between overflow-hidden rounded-[2rem] bg-[#212121] p-6 sm:p-8 md:col-span-7">
                 <div className="absolute -bottom-6 -right-2 z-0 text-[14rem] font-medium leading-none tracking-tighter text-[#2a2a2a]">
                   3
                 </div>
@@ -936,7 +936,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="reveal relative col-span-12 overflow-hidden rounded-[2rem] bg-[#f07053] p-8 md:col-span-4">
+              <div className="reveal relative col-span-12 overflow-hidden rounded-[2rem] bg-[#f07053] p-6 sm:p-8 md:col-span-4">
                 <div className="organic-blob fast absolute -bottom-16 -right-16 z-0 h-64 w-64 overflow-hidden bg-gradient-to-tr from-[#d9654b] to-[#b34026] shadow-[inset_0_0_30px_rgba(0,0,0,0.15)]" />
                 <div className="relative z-10">
                   <div className="mb-4 text-[10px] font-bold uppercase tracking-widest text-[#8c3521]">{COPY.bento.window.eyebrow}</div>
@@ -945,7 +945,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="mb-8 text-3xl font-medium leading-tight text-[#4a190f]">{COPY.bento.window.title}</h3>
 
-                  <div className="flex w-4/5 flex-wrap gap-2">
+                  <div className="flex w-full flex-wrap gap-2 sm:w-4/5">
                     {windowDays.map((value, index) => {
                       const colorClass = value === 0 ? "bg-[#212121]" : value === 1 ? "bg-[#d9654b]" : "bg-[#68c78e]";
                       return (
@@ -967,7 +967,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="reveal stagger-1 relative col-span-12 flex flex-col overflow-hidden rounded-[2rem] bg-[#212121] p-8 md:col-span-4">
+              <div className="reveal stagger-1 relative col-span-12 flex flex-col overflow-hidden rounded-[2rem] bg-[#212121] p-6 sm:p-8 md:col-span-4">
                 <div className="organic-blob slow absolute -left-16 -top-16 z-0 h-64 w-64 overflow-hidden bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] opacity-50" />
                 <div className="relative z-10 flex h-full flex-col">
                   <div className="mb-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500">{COPY.bento.later.eyebrow}</div>
@@ -993,7 +993,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="reveal stagger-2 relative col-span-12 overflow-hidden rounded-[2rem] bg-[#F2EDE4] p-8 md:col-span-4">
+              <div className="reveal stagger-2 relative col-span-12 overflow-hidden rounded-[2rem] bg-[#F2EDE4] p-6 sm:p-8 md:col-span-4">
                 <div
                   className={`absolute -bottom-16 -right-16 z-0 h-56 w-56 transition-all duration-700 ease-in-out ${nightState === "idle" ? "" : "scale-[2.5] opacity-30"
                     }`}
@@ -1022,18 +1022,18 @@ export default function LandingPage() {
                   </p>
 
                   {nightState === "idle" ? (
-                    <div className="mt-auto flex gap-2">
+                    <div className="mt-auto flex flex-col gap-2 sm:flex-row">
                       <button
                         type="button"
                         onClick={() => setNightState("yes")}
-                        className="rounded-xl bg-[#212121] px-4 py-3 text-xs font-semibold text-white transition-all hover:scale-105 active:scale-95"
+                        className="w-full rounded-xl bg-[#212121] px-4 py-3 text-xs font-semibold text-white transition-all hover:scale-105 active:scale-95 sm:w-auto"
                       >
                         {COPY.bento.night.yesButton}
                       </button>
                       <button
                         type="button"
                         onClick={() => setNightState("no")}
-                        className="rounded-xl bg-[#e4dfd5] px-4 py-3 text-xs font-semibold text-zinc-500 transition-all hover:bg-[#dbd6cc] active:scale-95"
+                        className="w-full rounded-xl bg-[#e4dfd5] px-4 py-3 text-xs font-semibold text-zinc-500 transition-all hover:bg-[#dbd6cc] active:scale-95 sm:w-auto"
                       >
                         {COPY.bento.night.noButton}
                       </button>
@@ -1055,8 +1055,8 @@ export default function LandingPage() {
             </div>
           </section>
 
-          <section className="relative z-0 mx-auto max-w-6xl px-6 py-12">
-            <div className="reveal flex flex-col items-center gap-12 rounded-[3rem] bg-[#B8AEE0] p-8 md:flex-row md:p-12 lg:gap-20 lg:p-16">
+          <section className="relative z-0 mx-auto max-w-6xl px-5 py-12 sm:px-6">
+            <div className="reveal flex flex-col items-center gap-10 rounded-[2.4rem] bg-[#B8AEE0] p-5 sm:gap-12 sm:rounded-[3rem] sm:p-8 md:flex-row md:p-12 lg:gap-20 lg:p-16">
               <div className="w-full md:w-1/2">
                 <h2 className="mb-4 text-4xl font-medium tracking-tight text-zinc-900 md:text-5xl">{COPY.faq.heading}</h2>
                 <p className="mb-10 text-lg text-zinc-800/80">{COPY.faq.subtitle}</p>
@@ -1090,7 +1090,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="relative flex h-[400px] w-full flex-col items-center justify-center overflow-hidden rounded-[2.5rem] border border-[#1a1a1a] bg-[#212121] p-2 md:w-1/2 md:p-3">
+              <div className="relative flex h-[340px] w-full flex-col items-center justify-center overflow-hidden rounded-[2rem] border border-[#1a1a1a] bg-[#212121] p-2 sm:h-[400px] sm:rounded-[2.5rem] md:w-1/2 md:p-3">
                 <div
                   className="pointer-events-none absolute inset-0 opacity-[0.03]"
                   style={{ backgroundImage: "radial-gradient(#ffffff 1px, transparent 1px)", backgroundSize: "20px 20px" }}
@@ -1102,7 +1102,7 @@ export default function LandingPage() {
                   className={`card-transition relative z-10 h-full w-full rounded-[2rem] ${faqVisible ? "translate-y-0 opacity-100" : "translate-y-[10px] opacity-0"
                     }`}
                 >
-                  <div className="relative flex h-full w-full items-center justify-center">
+                  <div className="relative flex h-full w-full scale-[0.84] items-center justify-center sm:scale-100">
                     {faqIndex === 0 ? (
                       <div className="relative h-full w-full">
                         <div className="absolute left-[-1%] top-[3%] w-[74%] rotate-[-10deg] overflow-hidden rounded-[1.9rem] border border-border/80 bg-parchment p-4 shadow-[0_30px_70px_rgba(0,0,0,0.28)]">
@@ -1268,14 +1268,14 @@ export default function LandingPage() {
 
           <footer className="relative mt-20 flex flex-col">
             <div className="relative z-10 rounded-[3rem] bg-[#F2EDE4] text-zinc-900 shadow-2xl md:rounded-[5rem]">
-              <div className="reveal mx-auto max-w-5xl px-6 py-32 text-center">
-                <h2 className="mb-8 text-4xl font-bold leading-[1.1] tracking-tight md:text-6xl">
+              <div className="reveal mx-auto max-w-5xl px-5 py-24 text-center sm:px-6 sm:py-32">
+                <h2 className="mb-8 text-[2.5rem] font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-6xl">
                   {COPY.footer.titleLine1} <br /> {COPY.footer.titleLine2}
                 </h2>
                 <div className="mb-8 flex flex-col justify-center gap-4 sm:flex-row">
                   <Link
                     href="/app"
-                    className="rounded-full bg-zinc-900 px-8 py-4 font-medium text-white transition-transform hover:scale-105"
+                    className="w-full rounded-full bg-zinc-900 px-8 py-4 font-medium text-white transition-transform hover:scale-105 sm:w-auto"
                   >
                     {COPY.footer.cta}
                   </Link>
@@ -1368,17 +1368,17 @@ export default function LandingPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center rounded-xl border border-zinc-800/50 bg-[#121212] p-1.5 shadow-inner transition-colors focus-within:border-zinc-600">
+                    <div className="flex flex-col items-stretch gap-2 rounded-xl border border-zinc-800/50 bg-[#121212] p-1.5 shadow-inner transition-colors focus-within:border-zinc-600 sm:flex-row sm:items-center sm:gap-0">
                       <input
                         type="text"
                         placeholder={COPY.footer.subscribePlaceholder}
                         value={hiMessage}
                         onChange={(event) => setHiMessage(event.target.value)}
-                        className="w-full border-none bg-transparent px-3 text-[13px] font-medium text-zinc-300 outline-none placeholder:text-zinc-500"
+                        className="w-full border-none bg-transparent px-3 py-2 text-[13px] font-medium text-zinc-300 outline-none placeholder:text-zinc-500"
                       />
                       <a
                         href={hiMailto}
-                        className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-zinc-700/50 bg-[#222] px-4 py-2 text-[12px] font-medium text-zinc-300 shadow-sm transition-colors hover:bg-[#333] hover:text-white"
+                        className="flex min-h-[44px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-zinc-700/50 bg-[#222] px-4 py-2 text-[12px] font-medium text-zinc-300 shadow-sm transition-colors hover:bg-[#333] hover:text-white sm:min-h-0"
                       >
                         <CornerDownLeft className="h-3.5 w-3.5" />
                         {COPY.footer.subscribeCta}
