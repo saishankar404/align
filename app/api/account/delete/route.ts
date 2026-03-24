@@ -43,13 +43,41 @@ export async function POST(request: Request) {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!url || !anonKey || !serviceRole) {
+  if (!url || !anonKey) {
     return NextResponse.json({ error: "Server not configured" }, { status: 500 });
   }
 
   const userId = await getAuthenticatedUserId(request, url, anonKey);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userClient = createServerClient();
+
+  const deletionSteps = [
+    userClient.from("reflections").delete().eq("user_id", userId),
+    userClient.from("checkins").delete().eq("user_id", userId),
+    userClient.from("moves").delete().eq("user_id", userId),
+    userClient.from("directions").delete().eq("user_id", userId),
+    userClient.from("cycles").delete().eq("user_id", userId),
+    userClient.from("later_items").delete().eq("user_id", userId),
+    userClient.from("profiles").delete().eq("id", userId),
+  ];
+
+  const deletionResults = await Promise.all(deletionSteps);
+  const deletionError = deletionResults.find((result) => result.error)?.error;
+
+  if (deletionError) {
+    console.error("synced data delete failed", {
+      userId,
+      message: deletionError.message,
+      code: deletionError.code,
+    });
+    return NextResponse.json({ error: "Failed to delete synced data" }, { status: 500 });
+  }
+
+  if (!serviceRole) {
+    return NextResponse.json({ ok: true, accountDeleted: false });
   }
 
   const adminClient = createClient<Database>(url, serviceRole, {
@@ -67,8 +95,8 @@ export async function POST(request: Request) {
       message: error.message,
       status: error.status,
     });
-    return NextResponse.json({ error: "Failed to delete account" }, { status: 500 });
+    return NextResponse.json({ ok: true, accountDeleted: false });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, accountDeleted: true });
 }
