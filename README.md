@@ -61,6 +61,12 @@ VAPID_PRIVATE_KEY=your-vapid-private-key
 VAPID_SUBJECT=mailto:align@localhost.dev
 ```
 
+production hostname:
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://align.saishankar.xyz
+```
+
 optional local-dev flag:
 
 ```bash
@@ -151,7 +157,7 @@ when changing behavior, prefer small, coherent edits over broad rewrites.
 
 before deploying, make sure:
 
-- `NEXT_PUBLIC_SITE_URL` points to the real production domain
+- `NEXT_PUBLIC_SITE_URL=https://align.saishankar.xyz`
 - supabase keys are set correctly
 - vapid keys are set if push is enabled
 - `pnpm build` passes

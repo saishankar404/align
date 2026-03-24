@@ -105,6 +105,12 @@ VAPID_SUBJECT=mailto:align@localhost.dev
 NEXT_PUBLIC_BYPASS_AUTH=true
 ```
 
+production hostname for deploys:
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://align.saishankar.xyz
+```
+
 ### validation
 
 before submitting, run what makes sense for your change.
