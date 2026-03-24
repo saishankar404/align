@@ -8,22 +8,17 @@ async function getAuthenticatedUserId(request: Request, url: string, anonKey: st
   const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice("Bearer ".length).trim() : null;
 
   if (bearerToken) {
-    const tokenClient = createClient<Database>(url, anonKey, {
+    const authClient = createClient<Database>(url, anonKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
-      },
-      global: {
-        headers: {
-          Authorization: `Bearer ${bearerToken}`,
-        },
       },
     });
 
     const {
       data: { user },
       error,
-    } = await tokenClient.auth.getUser();
+    } = await authClient.auth.getUser(bearerToken);
 
     if (!error && user) {
       return user.id;
@@ -64,16 +59,14 @@ export async function POST(request: Request) {
     },
   });
 
-  // Delete public data explicitly before removing the auth user so the reset
-  // still clears synced records even if auth deletion hits an edge case.
-  const { error: profileDeleteError } = await adminClient.from("profiles").delete().eq("id", userId);
-  if (profileDeleteError) {
-    return NextResponse.json({ error: "Failed to delete synced data" }, { status: 500 });
-  }
-
   const { error } = await adminClient.auth.admin.deleteUser(userId);
 
   if (error) {
+    console.error("account delete failed", {
+      userId,
+      message: error.message,
+      status: error.status,
+    });
     return NextResponse.json({ error: "Failed to delete account" }, { status: 500 });
   }
 
