@@ -451,37 +451,37 @@ export default function LandingPage() {
         className="landing-grain min-h-screen bg-zinc-950 font-body text-zinc-50 selection:bg-indigo-500/30 selection:text-indigo-200"
       >
         <div className="landing-content">
-          <nav className="fixed left-1/2 top-4 z-50 flex w-[min(540px,calc(100vw-20px))] -translate-x-1/2 flex-col gap-3 rounded-[2rem] border border-white/5 bg-[#161616]/95 px-3 py-3 shadow-2xl backdrop-blur sm:top-8 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:rounded-full sm:px-1.5 sm:py-1.5 sm:pr-2.5">
-            <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
-              <div className="ml-1 flex items-center gap-2.5 self-start sm:self-auto">
+          <nav className="fixed left-1/2 top-4 z-50 flex w-[min(540px,calc(100vw-20px))] -translate-x-1/2 items-center justify-between gap-3 rounded-full border border-white/5 bg-[#161616]/95 px-3 py-2.5 shadow-2xl backdrop-blur sm:top-8 sm:gap-0 sm:px-1.5 sm:py-1.5 sm:pr-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="ml-1 flex min-w-0 items-center gap-2.5 self-start sm:self-auto">
                 <div className="flex h-8 w-8 items-center justify-center sm:h-8 sm:w-8">
                   <Logo size={30} src="/logo_secondary.svg" priority />
                 </div>
-                <span className="font-gtw text-[20px] leading-none tracking-[-0.03em] text-white sm:text-[22px]">
+                <span className="font-gtw text-[18px] leading-none tracking-[-0.03em] text-white sm:text-[22px]">
                   Align.
                 </span>
               </div>
-              <Link
-                href="/app"
-                className="rounded-full border border-white/5 bg-[#282828] px-4 py-2 text-center text-[13px] font-medium text-white transition-colors hover:bg-[#333] sm:hidden"
-              >
-                {COPY.nav.cta}
+              <Link href="/method" className="min-h-[32px] px-1 text-[13px] font-medium text-zinc-300 transition-colors hover:text-white sm:hidden">
+                {COPY.nav.left}
               </Link>
             </div>
-            <div className="flex w-full items-center justify-center gap-6 border-t border-white/5 pt-3 text-[13px] font-medium text-zinc-300 sm:w-auto sm:justify-start sm:gap-6 sm:border-t-0 sm:pt-0 sm:text-[14px]">
-              <Link href="/method" className="min-h-[32px] px-1 transition-colors hover:text-white">
+            <div className="hidden items-center justify-center gap-6 text-[14px] font-medium text-zinc-300 sm:flex sm:w-auto sm:justify-start">
+              <Link
+                href="/method"
+                className="min-h-[32px] px-1 transition-colors hover:text-white"
+              >
                 {COPY.nav.left}
               </Link>
               <a href={supportMailto} className="min-h-[32px] px-1 transition-colors hover:text-white">
                 {COPY.nav.right}
               </a>
-              <Link
-                href="/app"
-                className="hidden rounded-full border border-white/5 bg-[#282828] px-5 py-1.5 text-center font-medium text-white transition-colors hover:bg-[#333] sm:inline-flex"
-              >
-                {COPY.nav.cta}
-              </Link>
             </div>
+            <Link
+              href="/app"
+              className="rounded-full border border-white/5 bg-[#282828] px-4 py-2 text-center text-[13px] font-medium text-white transition-colors hover:bg-[#333] sm:px-5 sm:py-1.5"
+            >
+              {COPY.nav.cta}
+            </Link>
           </nav>
 
           <div className="relative isolate z-20 overflow-hidden rounded-b-[3.5rem] bg-[#F2EDE4] pb-20 text-zinc-900 shadow-[0_30px_80px_rgba(0,0,0,0.18)] md:rounded-b-[5.5rem]">
