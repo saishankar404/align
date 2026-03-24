@@ -7,7 +7,7 @@ import GhostButton from "../shared/GhostButton";
 import type { ScreenProps } from "../OnboardingFlow";
 import { textContainerVariants, textItemVariants } from "./textVariants";
 
-export default function Welcome({ next }: ScreenProps) {
+export default function Welcome({ startAuth, data, next }: ScreenProps) {
   return (
     <motion.div className="h-full bg-ink text-parchment flex flex-col px-8 pt-[52px] pb-[44px]" variants={textContainerVariants} initial="hidden" animate="show">
       <motion.div className="font-gtw text-[32px] tracking-[-0.03em] text-center text-white/45" variants={textItemVariants}>
@@ -31,11 +31,22 @@ export default function Welcome({ next }: ScreenProps) {
       <motion.div className="font-body text-[13px] leading-[1.6] text-white/30 mb-7" variants={textItemVariants}>14 days. 3 moves a day. nothing more.</motion.div>
 
       <motion.div variants={textItemVariants}>
-        <CtaButton onClick={next} className="bg-parchment text-ink mb-2">
+        <CtaButton
+          onClick={next}
+          className="bg-parchment text-ink mb-2"
+        >
           <span>Get started</span>
           <span>→</span>
         </CtaButton>
-        <GhostButton onClick={next} className="text-white/30">already have an account</GhostButton>
+        <GhostButton
+          onClick={() => {
+            void startAuth();
+          }}
+          className="text-white/30"
+        >
+          already have an account
+        </GhostButton>
+        {data.saveError ? <p className="mt-3 text-sm text-white/60">{data.saveError}</p> : null}
       </motion.div>
     </motion.div>
   );

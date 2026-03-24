@@ -6,7 +6,7 @@ import SheetOverlay from "./SheetOverlay";
 import { useAppContext } from "@/lib/context/AppContext";
 import { todayStr } from "@/lib/utils/dates";
 import { db, type LocalMove } from "@/lib/db/local";
-import { syncAll } from "@/lib/db/sync";
+import { syncAllIfCloud } from "@/lib/db/sync";
 
 function MoveRow({ move, onToggle }: { move: LocalMove; onToggle: () => void }) {
   return (
@@ -46,7 +46,7 @@ export default function DayDetailSheet() {
     });
 
     await context.refresh();
-    syncAll(context.userId).catch(() => undefined);
+    syncAllIfCloud(context.userId).catch(() => undefined);
   };
 
   return (

@@ -1,26 +1,40 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { supabase } from "@/lib/supabase/client";
+import { useState } from "react";
 import { registerPushSubscription } from "@/lib/notifications/push";
+import { getActiveUserId, isCloudMode } from "@/lib/identity/client";
 import CtaButton from "../shared/CtaButton";
 import GhostButton from "../shared/GhostButton";
 import type { ScreenProps } from "../OnboardingFlow";
 import { textContainerVariants, textItemVariants } from "./textVariants";
 
-export default function NotificationsScreen({ next, setData }: ScreenProps) {
-  const enableNotifications = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+export default function NotificationsScreen({ next, setData, data }: ScreenProps) {
+  const [editing, setEditing] = useState<null | "morning" | "night">(null);
+  const [tempTime, setTempTime] = useState("08:00");
 
-    if (!user) {
-      setData((prev) => ({ ...prev, notifEnabled: false }));
-      next();
-      return;
+  const openEdit = (slot: "morning" | "night", current: string) => {
+    setEditing(slot);
+    setTempTime(current);
+  };
+
+  const enableNotifications = async () => {
+    const userId = await getActiveUserId();
+    let success = false;
+
+    if (userId && isCloudMode()) {
+      try {
+        success = await Promise.race<boolean>([
+          registerPushSubscription(userId),
+          new Promise<boolean>((resolve) => {
+            window.setTimeout(() => resolve(false), 4500);
+          }),
+        ]);
+      } catch {
+        success = false;
+      }
     }
 
-    const success = await registerPushSubscription(user.id);
     setData((prev) => ({ ...prev, notifEnabled: success }));
     next();
   };
@@ -58,21 +72,27 @@ export default function NotificationsScreen({ next, setData }: ScreenProps) {
       </motion.div>
 
       <motion.div variants={textItemVariants}>
-        <div className="flex items-center justify-between p-[15px_18px] bg-[#252525] rounded-[14px] mb-[10px]">
-          <div>
+        <button
+          onClick={() => openEdit("morning", data.notifMorningTime)}
+          className="w-full grid grid-cols-[1fr_auto] items-center gap-3 px-[14px] py-[15px] bg-[#252525] rounded-[14px] mb-[10px] border border-white/5"
+        >
+          <div className="text-left">
             <div className="font-gtw text-[15px] tracking-[-0.01em] text-parchment mb-[2px]">Morning</div>
             <div className="font-body text-[11px] text-white/40">What are you moving today?</div>
           </div>
-          <div className="font-gtw text-[12px] font-light text-white/35">8:00 AM</div>
-        </div>
+          <div className="font-gtw text-[12px] font-light text-white/35">{new Date(`2000-01-01T${data.notifMorningTime}:00`).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</div>
+        </button>
 
-        <div className="flex items-center justify-between p-[15px_18px] bg-[#252525] rounded-[14px] mb-[10px]">
-          <div>
+        <button
+          onClick={() => openEdit("night", data.notifNightTime)}
+          className="w-full grid grid-cols-[1fr_auto] items-center gap-3 px-[14px] py-[15px] bg-[#252525] rounded-[14px] mb-[10px] border border-white/5"
+        >
+          <div className="text-left">
             <div className="font-gtw text-[15px] tracking-[-0.01em] text-parchment mb-[2px]">Night</div>
             <div className="font-body text-[11px] text-white/40">Did you show up?</div>
           </div>
-          <div className="font-gtw text-[12px] font-light text-white/35">9:30 PM</div>
-        </div>
+          <div className="font-gtw text-[12px] font-light text-white/35">{new Date(`2000-01-01T${data.notifNightTime}:00`).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</div>
+        </button>
 
         <CtaButton onClick={enableNotifications} className="bg-slate text-ink mb-2">
           <span>Enable notifications</span>
@@ -83,6 +103,35 @@ export default function NotificationsScreen({ next, setData }: ScreenProps) {
           next();
         }} className="text-white/30">maybe later</GhostButton>
       </motion.div>
+
+      {editing ? (
+        <div className="absolute inset-0 bg-black/45 z-[70] flex items-end px-5 pb-[calc(var(--sab)+18px)]">
+          <div className="w-full rounded-[18px] bg-parchment p-5">
+            <div className="font-body text-[10px] font-medium tracking-[0.1em] uppercase text-dusk mb-1">Edit time</div>
+            <div className="font-gtw text-[28px] tracking-[-0.03em] text-ink mb-3">{editing === "morning" ? "Morning reminder" : "Night reminder"}</div>
+            <input
+              type="time"
+              value={tempTime}
+              onChange={(event) => setTempTime(event.target.value)}
+              className="w-full rounded-[12px] bg-sand px-3 py-3 text-[16px] text-ink border border-border mb-3"
+            />
+            <button
+              onClick={() => {
+                setData((prev) =>
+                  editing === "morning"
+                    ? { ...prev, notifMorningTime: tempTime }
+                    : { ...prev, notifNightTime: tempTime }
+                );
+                setEditing(null);
+              }}
+              className="w-full rounded-full bg-ink text-parchment py-3 font-gtw text-[13px]"
+            >
+              Save time
+            </button>
+            <button onClick={() => setEditing(null)} className="w-full py-3 font-body text-[12px] text-dusk">Cancel</button>
+          </div>
+        </div>
+      ) : null}
     </motion.div>
   );
 }

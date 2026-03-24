@@ -18,9 +18,10 @@ import {
   type LocalMove,
   type LocalProfile,
 } from "@/lib/db/local";
-import { syncAll } from "@/lib/db/sync";
+import { syncAllIfCloud } from "@/lib/db/sync";
 import { supabase } from "@/lib/supabase/client";
 import { cycleDay, todayStr } from "@/lib/utils/dates";
+import { getActiveUserId, isCloudMode } from "@/lib/identity/client";
 
 export type SheetName =
   | "mark-done"
@@ -78,6 +79,8 @@ const INITIAL_STATE: AppState = {
   activeSheet: null,
   sheetData: {},
 };
+
+const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_BYPASS_AUTH === "true";
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(INITIAL_STATE);
@@ -144,8 +147,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       userId,
     }));
 
-    if (navigator.onLine) {
-      syncAll(userId).catch(() => undefined);
+    if (navigator.onLine && isCloudMode()) {
+      syncAllIfCloud(userId).catch(() => undefined);
     }
   }, []);
 
@@ -171,11 +174,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const run = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const userId = await getActiveUserId();
 
-      const userId = session?.user?.id ?? null;
+      if (DEV_BYPASS_AUTH && !userId) {
+        localStorage.setItem("align_dev_user_id", "dev-user");
+      }
+
+      if (DEV_BYPASS_AUTH && userId) {
+        localStorage.setItem("align_dev_user_id", userId);
+      }
 
       if (!userId) {
         setState((prev) => ({ ...prev, isLoading: false, userId: null }));

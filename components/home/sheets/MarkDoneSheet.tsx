@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import SheetOverlay from "./SheetOverlay";
 import { useAppContext } from "@/lib/context/AppContext";
 import { db, type LocalMove } from "@/lib/db/local";
-import { syncAll } from "@/lib/db/sync";
+import { syncAllIfCloud } from "@/lib/db/sync";
 
 export default function MarkDoneSheet() {
   const context = useAppContext();
@@ -29,7 +29,7 @@ export default function MarkDoneSheet() {
 
     const allDone = context.todayMoves.every((item) => item.id === move.id || item.status === "done");
     context.openSheetChain("showed-up", { moveTitle: move.title, allDone });
-    syncAll(context.userId).catch(() => undefined);
+    syncAllIfCloud(context.userId).catch(() => undefined);
     setLoading(false);
   };
 

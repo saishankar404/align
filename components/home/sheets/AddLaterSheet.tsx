@@ -5,7 +5,7 @@ import SheetOverlay from "./SheetOverlay";
 import { useAppContext } from "@/lib/context/AppContext";
 import { db } from "@/lib/db/local";
 import { newId } from "@/lib/utils/ids";
-import { syncAll } from "@/lib/db/sync";
+import { syncAllIfCloud } from "@/lib/db/sync";
 
 type LaterType = "link" | "idea";
 
@@ -55,7 +55,7 @@ export default function AddLaterSheet() {
 
     await context.refresh();
     context.closeSheet();
-    syncAll(context.userId).catch(() => undefined);
+    syncAllIfCloud(context.userId).catch(() => undefined);
     setLoading(false);
     setContent("");
     setNote("");

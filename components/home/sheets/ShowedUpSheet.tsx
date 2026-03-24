@@ -11,8 +11,13 @@ export default function ShowedUpSheet() {
   const allDone = context.sheetData.allDone === true;
 
   return (
-    <SheetOverlay isOpen={isOpen} onClose={context.closeSheet}>
-      <div className="px-7 pb-2 bg-forest rounded-t-[28px]">
+    <SheetOverlay
+      isOpen={isOpen}
+      onClose={context.closeSheet}
+      sheetClassName="bg-forest"
+      handleClassName="bg-ink/15"
+    >
+      <div className="px-7 pb-[calc(var(--sab)+2px)]">
         <div className="font-body text-[9px] font-medium tracking-[0.12em] uppercase text-ink/50 mb-2">Today</div>
         <div className="font-gtw text-[32px] tracking-[-0.025em] leading-[1.15] text-ink mb-2">You showed up.</div>
 

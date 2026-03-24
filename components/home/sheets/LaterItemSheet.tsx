@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import SheetOverlay from "./SheetOverlay";
 import { useAppContext } from "@/lib/context/AppContext";
 import { db, type LocalLaterItem } from "@/lib/db/local";
-import { syncAll } from "@/lib/db/sync";
+import { syncAllIfCloud } from "@/lib/db/sync";
 import { useToast } from "@/lib/hooks/useToast";
 
 export default function LaterItemSheet() {
@@ -22,7 +22,7 @@ export default function LaterItemSheet() {
     await context.refresh();
     context.closeSheet();
     showToast("Saved to review before your next window", "info");
-    syncAll(context.userId).catch(() => undefined);
+    syncAllIfCloud(context.userId).catch(() => undefined);
     setLoading(null);
   };
 
@@ -32,7 +32,7 @@ export default function LaterItemSheet() {
     await db.laterItems.update(item.id, { dropped: true, _synced: 0 });
     await context.refresh();
     context.closeSheet();
-    syncAll(context.userId).catch(() => undefined);
+    syncAllIfCloud(context.userId).catch(() => undefined);
     setLoading(null);
   };
 

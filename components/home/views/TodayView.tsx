@@ -9,7 +9,7 @@ import SectionHeader from "@/components/home/shared/SectionHeader";
 import { useAppContext } from "@/lib/context/AppContext";
 import { useLenis } from "@/hooks/useLenis";
 import { db } from "@/lib/db/local";
-import { syncAll } from "@/lib/db/sync";
+import { syncAllIfCloud } from "@/lib/db/sync";
 
 const dirColorClass = {
   terra: "bg-terra",
@@ -57,13 +57,14 @@ export default function TodayView({ onOpenLaterTab }: TodayViewProps) {
 
   const sortedLater = [...context.laterItems].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const peekLater = sortedLater.slice(0, 3);
+  const nextMoveWord = context.todayMoves.length === 0 ? "first" : context.todayMoves.length === 1 ? "second" : "third";
 
   const toggleDoneToPending = async (moveId: string) => {
     if (!context.userId) return;
     const now = new Date().toISOString();
     await db.moves.update(moveId, { status: "pending", doneAt: undefined, updatedAt: now, _synced: 0 });
     await context.refresh();
-    syncAll(context.userId).catch(() => undefined);
+    syncAllIfCloud(context.userId).catch(() => undefined);
   };
 
   const showNightCTA = new Date().getHours() >= 18 && !context.todayCheckin;
@@ -115,7 +116,7 @@ export default function TodayView({ onOpenLaterTab }: TodayViewProps) {
         {context.todayMoves.length < 3 ? (
           <button onClick={() => context.openSheet("add-move")} className="flex items-center gap-[10px] pt-3 text-left">
             <span className="w-[22px] h-[22px] rounded-full border-[1.5px] border-dashed border-bs flex items-center justify-center text-[15px] text-bs">+</span>
-            <span className="font-body text-[13px] text-dusk">Add a third move</span>
+            <span className="font-body text-[13px] text-dusk">Add a {nextMoveWord} move</span>
           </button>
         ) : (
           <div className="pt-3 font-body text-[11px] text-dusk">3 moves in. window&apos;s full.</div>

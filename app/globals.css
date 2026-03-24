@@ -1,8 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Satoshi:wght@300;400;500&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/satoshi_fonts/Satoshi-Light.woff2") format("woff2"),
+    url("/fonts/satoshi_fonts/Satoshi-Light.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/satoshi_fonts/Satoshi-Regular.woff2") format("woff2"),
+    url("/fonts/satoshi_fonts/Satoshi-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/satoshi_fonts/Satoshi-Medium.woff2") format("woff2"),
+    url("/fonts/satoshi_fonts/Satoshi-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
 
 @font-face {
   font-family: "GTW";

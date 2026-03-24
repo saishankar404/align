@@ -1,6 +1,7 @@
 "use client";
 
 import type { Tables } from "@/lib/db/types";
+import type { Json } from "@/lib/db/types";
 import type {
   LocalCheckin,
   LocalCycle,
@@ -13,6 +14,7 @@ import type {
 import { db } from "@/lib/db/local";
 import { supabase } from "@/lib/supabase/client";
 import { debug } from "@/lib/utils/debug";
+import { isCloudMode } from "@/lib/identity/client";
 
 type DbProfile = Tables<"profiles">;
 type DbCycle = Tables<"cycles">;
@@ -23,6 +25,15 @@ type DbLaterItem = Tables<"later_items">;
 type DbReflection = Tables<"reflections">;
 
 function profileToDb(p: LocalProfile): DbProfile {
+  let pushSubscription: Json | null = null;
+  if (p.pushSubscription) {
+    try {
+      pushSubscription = JSON.parse(p.pushSubscription) as Json;
+    } catch {
+      pushSubscription = null;
+    }
+  }
+
   return {
     id: p.id,
     age: p.age ?? null,
@@ -31,13 +42,20 @@ function profileToDb(p: LocalProfile): DbProfile {
     notif_enabled: p.notifEnabled,
     notif_morning_time: p.notifMorningTime,
     notif_night_time: p.notifNightTime,
-    push_subscription: p.pushSubscription ?? null,
+    push_subscription: pushSubscription,
     timezone: p.timezone,
     updated_at: new Date().toISOString(),
   };
 }
 
 function profileFromDb(p: DbProfile): LocalProfile {
+  const pushSubscription =
+    p.push_subscription == null
+      ? undefined
+      : typeof p.push_subscription === "string"
+        ? p.push_subscription
+        : JSON.stringify(p.push_subscription);
+
   return {
     id: p.id,
     age: p.age ?? undefined,
@@ -45,8 +63,7 @@ function profileFromDb(p: DbProfile): LocalProfile {
     notifEnabled: p.notif_enabled,
     notifMorningTime: p.notif_morning_time,
     notifNightTime: p.notif_night_time,
-    pushSubscription:
-      p.push_subscription && typeof p.push_subscription === "string" ? p.push_subscription : undefined,
+    pushSubscription,
     timezone: p.timezone,
   };
 }
@@ -412,8 +429,13 @@ export async function pullFromSupabase(userId: string): Promise<void> {
 }
 
 export async function syncAll(userId: string): Promise<void> {
-  await pullFromSupabase(userId);
   await pushUnsynced(userId);
+  await pullFromSupabase(userId);
+}
+
+export async function syncAllIfCloud(userId: string): Promise<void> {
+  if (!isCloudMode()) return;
+  await syncAll(userId);
 }
 
 export function startAutoSync(userId: string): () => void {

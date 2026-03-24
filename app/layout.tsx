@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 
 export const metadata: Metadata = {
   title: "Align.",
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
     title: "Align.",
   },
   icons: {
+    icon: "/favicon.ico",
     apple: "/icons/apple-touch-icon.png",
   },
   other: {
@@ -32,7 +34,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full w-full overflow-hidden">
-      <body className="h-full w-full overflow-hidden bg-parchment">{children}</body>
+      <body className="h-full w-full overflow-hidden bg-parchment">
+        {children}
+        <PWAInstallPrompt />
+      </body>
     </html>
   );
 }

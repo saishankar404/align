@@ -8,7 +8,7 @@ interface ProfileRow {
   notif_morning_time: string;
   notif_night_time: string;
   notif_enabled: boolean;
-  push_subscription: string | null;
+  push_subscription: string | Record<string, unknown> | null;
 }
 
 function getLocalMinutes(timezone: string): number {
@@ -31,6 +31,24 @@ function toMinutes(hhmm: string): number {
 
 function inWindow(nowMinutes: number, targetMinutes: number): boolean {
   return Math.abs(nowMinutes - targetMinutes) <= 2;
+}
+
+function normalizeSubscription(
+  value: string | Record<string, unknown> | null
+): Record<string, unknown> | null {
+  if (!value) return null;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === "object") {
+        return parsed as Record<string, unknown>;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+  return value;
 }
 
 Deno.serve(async () => {
@@ -58,7 +76,8 @@ Deno.serve(async () => {
   const profiles = (data ?? []) as ProfileRow[];
 
   for (const profile of profiles) {
-    if (!profile.push_subscription) continue;
+    const subscription = normalizeSubscription(profile.push_subscription);
+    if (!subscription) continue;
 
     const nowMinutes = getLocalMinutes(profile.timezone || "UTC");
     const morningMinutes = toMinutes(profile.notif_morning_time || "08:00");
@@ -75,7 +94,7 @@ Deno.serve(async () => {
     if (!payload) continue;
 
     try {
-      await webpush.sendNotification(JSON.parse(profile.push_subscription), JSON.stringify(payload));
+      await webpush.sendNotification(subscription, JSON.stringify(payload));
     } catch (pushError) {
       const err = pushError as { statusCode?: number };
       if (err.statusCode === 410) {

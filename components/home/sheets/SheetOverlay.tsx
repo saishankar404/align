@@ -7,12 +7,21 @@ interface SheetOverlayProps {
   isOpen: boolean;
   onClose: () => void;
   preventClose?: boolean;
+  sheetClassName?: string;
+  handleClassName?: string;
   children: ReactNode;
 }
 
 const SHEET_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-export default function SheetOverlay({ isOpen, onClose, preventClose = false, children }: SheetOverlayProps) {
+export default function SheetOverlay({
+  isOpen,
+  onClose,
+  preventClose = false,
+  sheetClassName,
+  handleClassName,
+  children,
+}: SheetOverlayProps) {
   const dragControls = useDragControls();
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -38,7 +47,7 @@ export default function SheetOverlay({ isOpen, onClose, preventClose = false, ch
           />
 
           <motion.div
-            className="fixed left-0 right-0 bottom-0 z-[61] bg-parchment rounded-t-[28px] pb-[calc(24px+var(--sab))]"
+            className={`fixed left-0 right-0 bottom-0 z-[61] rounded-t-[28px] pb-[calc(24px+var(--sab))] ${sheetClassName ?? "bg-parchment"}`}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -53,7 +62,7 @@ export default function SheetOverlay({ isOpen, onClose, preventClose = false, ch
             <div className="flex justify-center pt-3 pb-4">
               <button
                 type="button"
-                className="w-9 h-1 rounded-[2px] bg-border"
+                className={`w-9 h-1 rounded-[2px] ${handleClassName ?? "bg-border"}`}
                 onPointerDown={(event) => {
                   if (!preventClose) dragControls.start(event);
                 }}

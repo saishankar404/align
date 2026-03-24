@@ -2,6 +2,14 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AddCircleIcon,
+  Calendar03Icon,
+  Home01Icon,
+  ListViewIcon,
+  UserIcon,
+} from "@hugeicons/core-free-icons";
 import TodayView from "./views/TodayView";
 import WindowView from "./views/WindowView";
 import LaterView from "./views/LaterView";
@@ -39,17 +47,17 @@ const viewVariants = {
 };
 
 function NavIcon({ id, active }: { id: ViewId; active: boolean }) {
-  const stroke = active ? "#F2EDE4" : "rgba(255,255,255,.3)";
+  const color = active ? "#F2EDE4" : "rgba(255,255,255,.3)";
   if (id === "home") {
-    return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 9.5L10 3 17 9.5V17h-4v-4H7v4H3V9.5Z" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+    return <HugeiconsIcon icon={Home01Icon} size={20} color={color} strokeWidth={1.8} />;
   }
   if (id === "window") {
-    return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="2" stroke={stroke} strokeWidth="1.5" /><path d="M3 9h14M10 4v13" stroke={stroke} strokeWidth="1.2" strokeLinecap="round" /></svg>;
+    return <HugeiconsIcon icon={Calendar03Icon} size={20} color={color} strokeWidth={1.8} />;
   }
   if (id === "later") {
-    return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M4 10h8M4 14h5" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" /></svg>;
+    return <HugeiconsIcon icon={ListViewIcon} size={20} color={color} strokeWidth={1.8} />;
   }
-  return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7.5" r="3" stroke={stroke} strokeWidth="1.5" /><path d="M4 17c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" /></svg>;
+  return <HugeiconsIcon icon={UserIcon} size={20} color={color} strokeWidth={1.8} />;
 }
 
 export default function HomeApp() {
@@ -98,7 +106,9 @@ export default function HomeApp() {
       <div className="flex items-center gap-[6px] px-7 pt-[calc(14px+env(safe-area-inset-top))] shrink-0 z-10" style={{ background: "transparent" }}>
         <motion.button whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} onClick={() => goView("home")} className={`font-gtw text-[13px] tracking-[-0.01em] px-[18px] py-2 rounded-full ${selectedTab === "home" ? "bg-ink text-parchment" : "bg-sand text-dusk"}`}>Today</motion.button>
         <motion.button whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} onClick={() => goView("window")} className={`font-gtw text-[13px] tracking-[-0.01em] px-[18px] py-2 rounded-full ${selectedTab === "window" ? "bg-ink text-parchment" : "bg-sand text-dusk"}`}>Window</motion.button>
-        <motion.button whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} onClick={() => context.openSheet("add-move")} className="ml-auto w-[34px] h-[34px] rounded-full bg-sand text-dusk text-[20px]">+</motion.button>
+        <motion.button whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} onClick={() => context.openSheet("add-move")} className="ml-auto w-[34px] h-[34px] rounded-full bg-sand text-dusk flex items-center justify-center">
+          <HugeiconsIcon icon={AddCircleIcon} size={18} color="#9E9485" strokeWidth={1.8} />
+        </motion.button>
       </div>
 
       <div className="flex-1 relative overflow-hidden z-10">

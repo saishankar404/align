@@ -6,7 +6,7 @@ import { useAppContext } from "@/lib/context/AppContext";
 import { db } from "@/lib/db/local";
 import { newId } from "@/lib/utils/ids";
 import { todayStr } from "@/lib/utils/dates";
-import { syncAll } from "@/lib/db/sync";
+import { syncAllIfCloud } from "@/lib/db/sync";
 
 export default function NightCheckinSheet() {
   const context = useAppContext();
@@ -30,7 +30,7 @@ export default function NightCheckinSheet() {
 
     await context.refresh();
     context.openSheetChain(status === "showed_up" ? "showed-up" : "avoided");
-    syncAll(context.userId).catch(() => undefined);
+    syncAllIfCloud(context.userId).catch(() => undefined);
     setLoading(null);
   };
 

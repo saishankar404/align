@@ -5,7 +5,7 @@ import { closeCycle } from "@/lib/cycle/close";
 import { createNewCycle } from "@/lib/cycle/create";
 import { useAppContext } from "@/lib/context/AppContext";
 import { db } from "@/lib/db/local";
-import { syncAll } from "@/lib/db/sync";
+import { syncAllIfCloud } from "@/lib/db/sync";
 import { newId } from "@/lib/utils/ids";
 import LaterView from "@/components/home/views/LaterView";
 
@@ -64,7 +64,7 @@ export default function WindowClosedFlow({ visible, onComplete }: WindowClosedFl
       _synced: 0,
     });
     await context.refresh();
-    syncAll(context.userId).catch(() => undefined);
+    syncAllIfCloud(context.userId).catch(() => undefined);
     setSaving(false);
     setPhase(3);
   };
@@ -77,7 +77,7 @@ export default function WindowClosedFlow({ visible, onComplete }: WindowClosedFl
       await db.laterItems.update(itemId, { dropped: true, _synced: 0 });
     }
     await context.refresh();
-    syncAll(context.userId).catch(() => undefined);
+    syncAllIfCloud(context.userId).catch(() => undefined);
   };
 
   const openWindow = async () => {
@@ -85,7 +85,7 @@ export default function WindowClosedFlow({ visible, onComplete }: WindowClosedFl
     setSaving(true);
     await closeCycle(context.currentCycle.id);
     await createNewCycle(context.userId, newDirections.filter((item) => item.trim()), newLength);
-    await syncAll(context.userId);
+    await syncAllIfCloud(context.userId);
     await context.refresh();
     setSaving(false);
     onComplete();
