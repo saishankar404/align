@@ -1,34 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
-import PWAUpdateController from "@/components/pwa/PWAUpdateController";
+import { buildDefaultMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Align.",
-  description: "14-day commitment engine",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Align.",
-  },
-  icons: {
-    icon: [
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-    ],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
-    shortcut: "/favicon-32x32.png",
-  },
-  other: {
-    "mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-status-bar-style": "black-translucent",
-    "apple-mobile-web-app-title": "Align.",
-    "theme-color": "#1A1A1A",
-  },
-};
+export const metadata: Metadata = buildDefaultMetadata();
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -39,12 +13,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full w-full overflow-hidden">
-      <body className="h-full w-full overflow-hidden bg-parchment">
-        {children}
-        <PWAUpdateController />
-        <PWAInstallPrompt />
-      </body>
+    <html lang="en" className="h-full w-full">
+      <body className="h-full w-full bg-parchment">{children}</body>
     </html>
   );
 }

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { getServerIdentityMode, hasServerLocalIdentity } from "@/lib/identity/server";
 
-export default async function EntryPage() {
+export default async function AppLaunchPage() {
   if (process.env.NEXT_PUBLIC_BYPASS_AUTH === "true") {
     redirect("/onboarding");
   }

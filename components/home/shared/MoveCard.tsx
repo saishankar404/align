@@ -325,7 +325,7 @@ export default function MoveCard({ move, direction, tone, onCardTap, onCheckTap,
               fill="none"
               initial={false}
               animate={{ scale: done ? [0, 1.15, 1] : 0, opacity: done ? 1 : 0 }}
-              transition={MOTION_SPRING.press}
+              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1], times: [0, 0.65, 1] }}
             >
               <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </motion.svg>

@@ -1,8 +1,8 @@
 {
-  "name": "Align.",
-  "short_name": "Align.",
-  "description": "14-day commitment engine",
-  "start_url": "/",
+  "name": "Align. commitment app",
+  "short_name": "Align",
+  "description": "14-day commitment app for fewer decisions, clearer daily moves, and honest follow-through.",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
