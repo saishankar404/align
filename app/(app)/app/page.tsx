@@ -1,14 +1,14 @@
-import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { getServerIdentityMode, hasServerLocalIdentity } from "@/lib/identity/server";
+import DesktopAppEntryGate from "@/components/app/DesktopAppEntryGate";
 
-export default async function AppLaunchPage() {
+async function getAppDestination() {
   if (process.env.NEXT_PUBLIC_BYPASS_AUTH === "true") {
-    redirect("/onboarding");
+    return "/onboarding";
   }
 
   if (getServerIdentityMode() === "local" && hasServerLocalIdentity()) {
-    redirect("/home");
+    return "/home";
   }
 
   const supabase = createServerClient();
@@ -17,7 +17,7 @@ export default async function AppLaunchPage() {
   } = await supabase.auth.getSession();
 
   if (!session) {
-    redirect("/onboarding");
+    return "/onboarding";
   }
 
   const {
@@ -25,14 +25,20 @@ export default async function AppLaunchPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/onboarding");
+    return "/onboarding";
   }
 
   const { data: profile } = await supabase.from("profiles").select("id").eq("id", user.id).maybeSingle();
 
   if (!profile) {
-    redirect("/onboarding");
+    return "/onboarding";
   }
 
-  redirect("/home");
+  return "/home";
+}
+
+export default async function AppLaunchPage() {
+  const destination = await getAppDestination();
+
+  return <DesktopAppEntryGate destination={destination} />;
 }
