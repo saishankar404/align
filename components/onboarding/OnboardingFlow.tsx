@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import ArrowLeft01Icon from "@hugeicons/core-free-icons/dist/esm/ArrowLeft01Icon";
-import { addDays, format } from "date-fns";
 import { db, type LocalProfile } from "@/lib/db/local";
 import { requestSyncIfCloud, syncAllIfCloud } from "@/lib/db/sync";
 import { supabase } from "@/lib/supabase/client";
@@ -18,6 +17,7 @@ import {
   setModeLocal,
   setModeCloud,
 } from "@/lib/identity/client";
+import { createNewCycle } from "@/lib/cycle/create";
 import Welcome from "./screens/Welcome";
 import SyncChoiceScreen from "./screens/SyncChoiceScreen";
 import StoryProblem from "./screens/StoryProblem";
@@ -59,12 +59,14 @@ export type ScreenProps = {
   next: () => void;
   back: () => void;
   finish: () => void;
-  startAuth: () => Promise<void>;
+  startAuth: (intent?: "existing" | "signup") => Promise<void>;
   chooseLocal: () => void;
 };
 
 type LinkState = {
   status: "idle" | "checking" | "conflict" | "merging" | "error";
+  mode?: "link" | "signup";
+  resolution?: "use_cloud" | "make_new";
   cloudUserId?: string;
   localUserId?: string;
   message?: string;
@@ -72,6 +74,22 @@ type LinkState = {
 
 const LINK_PENDING_LOCAL_USER_ID_KEY = "align_link_local_user_id";
 const FIRST_STORY_STEP = 2;
+
+function createInitialOnboardingData(): OnboardingData {
+  return {
+    name: "",
+    age: "",
+    directions: ["", "", ""],
+    cycleLength: 14,
+    notifEnabled: false,
+    notifMorningTime: "08:00",
+    notifNightTime: "21:30",
+    isSaving: false,
+    saveError: null,
+    nameError: null,
+    directionsError: null,
+  };
+}
 
 const screenVariants = {
   enter: (dir: number) => ({
@@ -123,7 +141,31 @@ async function clearRemoteUserData(userId: string): Promise<void> {
     supabase.from("directions").delete().eq("user_id", userId),
     supabase.from("cycles").delete().eq("user_id", userId),
     supabase.from("later_items").delete().eq("user_id", userId),
+    supabase.from("profiles").delete().eq("id", userId),
   ]);
+}
+
+async function clearLocalUserData(userId: string): Promise<void> {
+  await db.transaction("rw", db.tables, async () => {
+    await db.profiles.delete(userId);
+    const [cycles, directions, moves, checkins, laterItems, reflections, pendingDeletes] = await Promise.all([
+      db.cycles.where("userId").equals(userId).toArray(),
+      db.directions.where("userId").equals(userId).toArray(),
+      db.moves.where("userId").equals(userId).toArray(),
+      db.checkins.where("userId").equals(userId).toArray(),
+      db.laterItems.where("userId").equals(userId).toArray(),
+      db.reflections.where("userId").equals(userId).toArray(),
+      db.pendingDeletes.where("userId").equals(userId).toArray(),
+    ]);
+
+    await Promise.all(cycles.map((row) => db.cycles.delete(row.id)));
+    await Promise.all(directions.map((row) => db.directions.delete(row.id)));
+    await Promise.all(moves.map((row) => db.moves.delete(row.id)));
+    await Promise.all(checkins.map((row) => db.checkins.delete(row.id)));
+    await Promise.all(laterItems.map((row) => db.laterItems.delete(row.id)));
+    await Promise.all(reflections.map((row) => db.reflections.delete(row.id)));
+    await Promise.all(pendingDeletes.map((row) => db.pendingDeletes.delete(row.key)));
+  });
 }
 
 export default function OnboardingFlow() {
@@ -131,19 +173,8 @@ export default function OnboardingFlow() {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [linkState, setLinkState] = useState<LinkState>({ status: "idle" });
-  const [data, setData] = useState<OnboardingData>({
-    name: "",
-    age: "",
-    directions: ["", "", ""],
-    cycleLength: 14,
-    notifEnabled: false,
-    notifMorningTime: "08:00",
-    notifNightTime: "21:30",
-    isSaving: false,
-    saveError: null,
-    nameError: null,
-    directionsError: null,
-  });
+  const [showFreshStartWarning, setShowFreshStartWarning] = useState(false);
+  const [data, setData] = useState<OnboardingData>(createInitialOnboardingData);
 
   const steps = useMemo(
     () => [
@@ -162,6 +193,11 @@ export default function OnboardingFlow() {
   );
 
   const CurrentScreen = steps[step];
+
+  useEffect(() => {
+    if (linkState.status === "conflict" && linkState.mode === "signup") return;
+    setShowFreshStartWarning(false);
+  }, [linkState.mode, linkState.status]);
 
   const completeLinkWithLocal = async (localUserId: string, cloudUserId: string) => {
     setLinkState({ status: "merging", localUserId, cloudUserId, message: "Moving this device data to your account..." });
@@ -235,26 +271,7 @@ export default function OnboardingFlow() {
 
   const completeLinkWithCloud = async (localUserId: string, cloudUserId: string) => {
     setLinkState({ status: "merging", localUserId, cloudUserId, message: "Switching this device to cloud data..." });
-
-    await db.transaction(
-      "rw",
-      db.tables,
-      async () => {
-        await db.profiles.delete(localUserId);
-        const localCycles = await db.cycles.where("userId").equals(localUserId).toArray();
-        await Promise.all(localCycles.map((row) => db.cycles.delete(row.id)));
-        const localDirections = await db.directions.where("userId").equals(localUserId).toArray();
-        await Promise.all(localDirections.map((row) => db.directions.delete(row.id)));
-        const localMoves = await db.moves.where("userId").equals(localUserId).toArray();
-        await Promise.all(localMoves.map((row) => db.moves.delete(row.id)));
-        const localCheckins = await db.checkins.where("userId").equals(localUserId).toArray();
-        await Promise.all(localCheckins.map((row) => db.checkins.delete(row.id)));
-        const localLater = await db.laterItems.where("userId").equals(localUserId).toArray();
-        await Promise.all(localLater.map((row) => db.laterItems.delete(row.id)));
-        const localReflections = await db.reflections.where("userId").equals(localUserId).toArray();
-        await Promise.all(localReflections.map((row) => db.reflections.delete(row.id)));
-      }
-    );
+    await clearLocalUserData(localUserId);
 
     setModeCloud(cloudUserId);
     localStorage.removeItem(LINK_PENDING_LOCAL_USER_ID_KEY);
@@ -262,24 +279,132 @@ export default function OnboardingFlow() {
     router.push("/home");
   };
 
-  useEffect(() => {
-    const markSignedIn = (userId: string, intent: string | null) => {
-      setModeCloud(userId);
-      setData((prev) => ({ ...prev, saveError: null }));
-      if (intent !== "link") {
-        setStep((prev) => (prev < FIRST_STORY_STEP ? FIRST_STORY_STEP : prev));
+  const cleanupAuthQueryParams = () => {
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("afterAuth");
+    cleanUrl.searchParams.delete("code");
+    cleanUrl.searchParams.delete("authError");
+    cleanUrl.searchParams.delete("authErrorCode");
+    cleanUrl.searchParams.delete("authErrorDescription");
+    cleanUrl.searchParams.delete("intent");
+    window.history.replaceState({}, "", `${cleanUrl.pathname}${cleanUrl.search}`);
+  };
+
+  const useCloudAccountData = async (cloudUserId: string) => {
+    setLinkState({
+      status: "merging",
+      mode: "signup",
+      resolution: "use_cloud",
+      cloudUserId,
+      message: "Using your existing cloud window...",
+    });
+    setModeCloud(cloudUserId);
+    localStorage.removeItem(LINK_PENDING_LOCAL_USER_ID_KEY);
+    setShowFreshStartWarning(false);
+    cleanupAuthQueryParams();
+    await syncAllIfCloud(cloudUserId);
+    router.push("/home");
+  };
+
+  const startFreshWithCloudAccount = async (cloudUserId: string) => {
+    setLinkState({
+      status: "merging",
+      mode: "signup",
+      resolution: "make_new",
+      cloudUserId,
+      message: "Resetting your existing cloud window...",
+    });
+
+    await clearRemoteUserData(cloudUserId);
+    await clearLocalUserData(cloudUserId);
+    setModeCloud(cloudUserId);
+    localStorage.removeItem(LINK_PENDING_LOCAL_USER_ID_KEY);
+    setShowFreshStartWarning(false);
+    setData(createInitialOnboardingData());
+    setDirection(1);
+    setStep(FIRST_STORY_STEP);
+    setLinkState({ status: "idle" });
+    cleanupAuthQueryParams();
+  };
+
+  const handleSignedInIntent = async (cloudUserId: string, intent: string | null): Promise<void> => {
+    if (intent === "link") {
+      const localUserId = localStorage.getItem(LINK_PENDING_LOCAL_USER_ID_KEY);
+      if (!localUserId || localUserId === cloudUserId) {
+        setModeCloud(cloudUserId);
+        cleanupAuthQueryParams();
+        router.push("/home");
+        return;
       }
 
-      const cleanUrl = new URL(window.location.href);
-      cleanUrl.searchParams.delete("afterAuth");
-      cleanUrl.searchParams.delete("code");
-      cleanUrl.searchParams.delete("authError");
-      cleanUrl.searchParams.delete("authErrorCode");
-      cleanUrl.searchParams.delete("authErrorDescription");
-      cleanUrl.searchParams.delete("intent");
-      window.history.replaceState({}, "", `${cleanUrl.pathname}${cleanUrl.search}`);
-    };
+      setLinkState({
+        status: "checking",
+        mode: "link",
+        localUserId,
+        cloudUserId,
+        message: "Checking local and cloud data...",
+      });
+      const [localHasData, remoteHasData] = await Promise.all([
+        hasAnyLocalData(localUserId),
+        hasAnyRemoteData(cloudUserId),
+      ]);
 
+      if (localHasData && remoteHasData) {
+        setLinkState({
+          status: "conflict",
+          mode: "link",
+          localUserId,
+          cloudUserId,
+          message: "Both local and cloud data exist. Choose what to keep.",
+        });
+        return;
+      }
+
+      if (localHasData) {
+        await completeLinkWithLocal(localUserId, cloudUserId);
+        return;
+      }
+
+      await completeLinkWithCloud(localUserId, cloudUserId);
+      return;
+    }
+
+    if (intent === "signup") {
+      setLinkState({
+        status: "checking",
+        mode: "signup",
+        cloudUserId,
+        message: "Checking if this account already has a window...",
+      });
+      const remoteHasData = await hasAnyRemoteData(cloudUserId);
+      if (remoteHasData) {
+        setLinkState({
+          status: "conflict",
+          mode: "signup",
+          cloudUserId,
+          message:
+            "This Google account already has data. Use the existing cloud window or make a fresh one.",
+        });
+        return;
+      }
+      setLinkState({ status: "idle" });
+    }
+
+    if (intent === "existing") {
+      const remoteHasData = await hasAnyRemoteData(cloudUserId);
+      if (remoteHasData) {
+        await useCloudAccountData(cloudUserId);
+        return;
+      }
+    }
+
+    setModeCloud(cloudUserId);
+    setData((prev) => ({ ...prev, saveError: null }));
+    setStep((prev) => (prev < FIRST_STORY_STEP ? FIRST_STORY_STEP : prev));
+    cleanupAuthQueryParams();
+  };
+
+  useEffect(() => {
     const run = async () => {
       const params = new URL(window.location.href).searchParams;
       const hasCode = !!params.get("code");
@@ -293,40 +418,7 @@ export default function OnboardingFlow() {
 
       const cloudUserId = await getCloudUserId();
       if (cloudUserId) {
-        if (intent === "link") {
-          const localUserId = localStorage.getItem(LINK_PENDING_LOCAL_USER_ID_KEY);
-          if (!localUserId || localUserId === cloudUserId) {
-            setModeCloud(cloudUserId);
-            router.push("/home");
-            return;
-          }
-
-          setLinkState({ status: "checking", localUserId, cloudUserId, message: "Checking local and cloud data..." });
-          const [localHasData, remoteHasData] = await Promise.all([
-            hasAnyLocalData(localUserId),
-            hasAnyRemoteData(cloudUserId),
-          ]);
-
-          if (localHasData && remoteHasData) {
-            setLinkState({
-              status: "conflict",
-              localUserId,
-              cloudUserId,
-              message: "Both local and cloud data exist. Choose what to keep.",
-            });
-            return;
-          }
-
-          if (localHasData) {
-            await completeLinkWithLocal(localUserId, cloudUserId);
-            return;
-          }
-
-          await completeLinkWithCloud(localUserId, cloudUserId);
-          return;
-        }
-
-        markSignedIn(cloudUserId, intent);
+        await handleSignedInIntent(cloudUserId, intent);
         return;
       }
 
@@ -335,7 +427,7 @@ export default function OnboardingFlow() {
           await new Promise((resolve) => window.setTimeout(resolve, 250));
           const nextCloudUserId = await getCloudUserId();
           if (nextCloudUserId) {
-            markSignedIn(nextCloudUserId, intent);
+            await handleSignedInIntent(nextCloudUserId, intent);
             return;
           }
         }
@@ -356,7 +448,7 @@ export default function OnboardingFlow() {
       setLinkState((prev) => ({
         ...prev,
         status: prev.status === "idle" ? "idle" : "error",
-        message: "Could not finish linking. Try again.",
+        message: "Could not finish sign-in. Try again.",
       }));
       setData((prev) => ({ ...prev, saveError: "Sign-in failed. Please try again." }));
     });
@@ -430,11 +522,6 @@ export default function OnboardingFlow() {
       }
 
       const now = new Date().toISOString();
-      const today = format(new Date(), "yyyy-MM-dd");
-      const cycleId = newId();
-      const colorMap: Array<"terra" | "forest" | "slate"> = ["terra", "forest", "slate"];
-      const validDirections = data.directions.map((d) => d.trim()).filter((d) => d.length > 0);
-
       await db.profiles.put({
         id: userId,
         name: data.name.trim(),
@@ -446,31 +533,7 @@ export default function OnboardingFlow() {
         pushSubscription: localStorage.getItem("align_push_sub") ?? undefined,
       });
 
-      await db.cycles.put({
-        id: cycleId,
-        userId,
-        startDate: today,
-        endDate: format(addDays(new Date(), data.cycleLength - 1), "yyyy-MM-dd"),
-        lengthDays: data.cycleLength,
-        status: "active",
-        createdAt: now,
-        _synced: 0,
-      });
-
-      await Promise.all(
-        validDirections.map((title, index) =>
-          db.directions.put({
-            id: newId(),
-            cycleId,
-            userId,
-            title,
-            color: colorMap[index],
-            position: (index + 1) as 1 | 2 | 3,
-            createdAt: now,
-            _synced: 0,
-          })
-        )
-      );
+      await createNewCycle(userId, data.directions, data.cycleLength);
 
       localStorage.setItem("align_onboarded", "true");
       if (isCloudMode()) {
@@ -490,7 +553,7 @@ export default function OnboardingFlow() {
     }
   };
 
-  const startAuth = async () => {
+  const startAuth = async (intent: "existing" | "signup" = "existing") => {
     if (DEV_BYPASS_AUTH) {
       setModeLocal();
       next();
@@ -500,7 +563,7 @@ export default function OnboardingFlow() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=onboarding`,
+        redirectTo: `${window.location.origin}/auth/callback?next=onboarding&intent=${intent}`,
         queryParams: {
           prompt: "select_account",
         },
@@ -523,7 +586,9 @@ export default function OnboardingFlow() {
     <div className="fixed inset-0 w-full h-full overflow-hidden bg-parchment">
       {linkState.status !== "idle" ? (
         <div className="absolute inset-0 z-[80] bg-ink px-8 pt-[60px] pb-[44px] flex flex-col">
-          <div className="font-body text-[10px] font-medium tracking-[0.14em] uppercase text-white/40 mb-4">Link account</div>
+          <div className="font-body text-[10px] font-medium tracking-[0.14em] uppercase text-white/40 mb-4">
+            {linkState.mode === "signup" ? "Existing account" : "Link account"}
+          </div>
           <div className="flex-1 flex flex-col justify-center">
             <h1 className="font-gtw text-[52px] tracking-[-0.045em] leading-[0.95] text-parchment mb-4">
               {linkState.status === "conflict" ? "Choose what to keep." : "Linking your data."}
@@ -533,29 +598,74 @@ export default function OnboardingFlow() {
             </p>
           </div>
           <AnimatedAutoSize className="w-full" transition={{ duration: MOTION_DURATION.smallState, ease: MOTION_EASE.easeInOut, delay: 0.05 }}>
-            {linkState.status === "conflict" && linkState.localUserId && linkState.cloudUserId ? (
+            {linkState.status === "conflict" && linkState.mode === "link" && linkState.localUserId && linkState.cloudUserId ? (
               <div className="space-y-2">
-              <button
-                onClick={() => {
-                  void completeLinkWithLocal(linkState.localUserId as string, linkState.cloudUserId as string);
-                }}
-                className="w-full rounded-full bg-slate text-ink py-[14px] font-gtw text-[14px] tracking-[0.02em]"
-              >
-                Keep this device data
-              </button>
-              <button
-                onClick={() => {
-                  void completeLinkWithCloud(linkState.localUserId as string, linkState.cloudUserId as string);
-                }}
-                className="w-full rounded-full bg-white/8 text-white py-[14px] font-gtw text-[14px] tracking-[0.02em]"
-              >
-                Use cloud data
-              </button>
+                <button
+                  onClick={() => {
+                    void completeLinkWithLocal(linkState.localUserId as string, linkState.cloudUserId as string);
+                  }}
+                  className="w-full rounded-full bg-slate text-ink py-[14px] font-gtw text-[14px] tracking-[0.02em]"
+                >
+                  Keep this device data
+                </button>
+                <button
+                  onClick={() => {
+                    void completeLinkWithCloud(linkState.localUserId as string, linkState.cloudUserId as string);
+                  }}
+                  className="w-full rounded-full bg-white/8 text-white py-[14px] font-gtw text-[14px] tracking-[0.02em]"
+                >
+                  Use cloud data
+                </button>
+              </div>
+            ) : linkState.status === "conflict" && linkState.mode === "signup" && linkState.cloudUserId ? (
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    void useCloudAccountData(linkState.cloudUserId as string);
+                  }}
+                  className="w-full rounded-full bg-slate text-ink py-[14px] font-gtw text-[14px] tracking-[0.02em]"
+                >
+                  Use cloud data
+                </button>
+                <button
+                  onClick={() => setShowFreshStartWarning(true)}
+                  className="w-full rounded-full bg-white/8 text-white py-[14px] font-gtw text-[14px] tracking-[0.02em]"
+                >
+                  Make new one anyway
+                </button>
               </div>
             ) : (
               <div className="font-body text-[13px] text-white/35">Please wait...</div>
             )}
           </AnimatedAutoSize>
+
+          {showFreshStartWarning && linkState.mode === "signup" && linkState.cloudUserId ? (
+            <div className="absolute inset-0 z-[81] bg-black/55 flex items-end px-4 pb-[calc(var(--sab)+14px)]">
+              <div className="w-full rounded-[20px] bg-parchment border border-border p-5">
+                <div className="font-body text-[9px] font-medium tracking-[0.1em] uppercase text-terra mb-1">Heads up</div>
+                <div className="font-gtw text-[30px] tracking-[-0.03em] text-ink leading-[1.03] mb-2">
+                  Start fresh on this account?
+                </div>
+                <p className="font-body text-[13px] leading-[1.6] text-dusk mb-4">
+                  This will reset existing cloud data for this account and replace it with your new onboarding setup on this device.
+                </p>
+                <button
+                  onClick={() => {
+                    void startFreshWithCloudAccount(linkState.cloudUserId as string);
+                  }}
+                  className="w-full rounded-full py-3 font-gtw text-[13px] mb-2 bg-terra text-ink"
+                >
+                  Yes, make this the new primary
+                </button>
+                <button
+                  onClick={() => setShowFreshStartWarning(false)}
+                  className="w-full py-2 text-[12px] text-dusk min-hit-target touch-hit-area"
+                >
+                  Go back
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

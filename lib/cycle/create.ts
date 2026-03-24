@@ -8,6 +8,17 @@ export async function createNewCycle(userId: string, directions: string[], lengt
   const cycleId = newId();
   const colorMap: Array<"terra" | "forest" | "slate"> = ["terra", "forest", "slate"];
 
+  const existingActiveCycles = await db.cycles.where("userId").equals(userId).filter((cycle) => cycle.status === "active").toArray();
+  await Promise.all(
+    existingActiveCycles.map((cycle) =>
+      db.cycles.update(cycle.id, {
+        status: "closed",
+        closedAt: now,
+        _synced: 0,
+      })
+    )
+  );
+
   await db.cycles.put({
     id: cycleId,
     userId,

@@ -7,6 +7,7 @@ import { textContainerVariants, textItemVariants } from "./textVariants";
 
 export default function DoneScreen({ data, finish }: ScreenProps) {
   const displayName = data.name.trim();
+  const cycleLength = data.cycleLength;
 
   return (
     <motion.div className="h-full bg-slate px-8 pt-[52px] pb-[44px] flex flex-col justify-between text-ink" variants={textContainerVariants} initial="hidden" animate="show">
@@ -30,9 +31,9 @@ export default function DoneScreen({ data, finish }: ScreenProps) {
           is open.
         </h1>
 
-        <p className="font-body text-[15px] leading-[1.6] text-ink/50 mb-0">Day 1 of 14. What are you moving today?</p>
+        <p className="font-body text-[15px] leading-[1.6] text-ink/50 mb-0">Day 1 of {cycleLength}. What are you moving today?</p>
         <div className="flex gap-[5px] mt-[22px]">
-          {Array.from({ length: 14 }).map((_, i) => (
+          {Array.from({ length: cycleLength }).map((_, i) => (
             <div key={i} className={`w-[11px] h-[11px] rounded-full ${i === 0 ? "bg-[rgba(26,26,26,.7)]" : "bg-[rgba(26,26,26,.18)]"}`} />
           ))}
         </div>

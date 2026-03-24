@@ -1,8 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Logo } from "@/components/shared/Logo";
 import { ENTER_TRANSITION, EXIT_TRANSITION, VIEW_TRANSITION } from "@/lib/motion/tokens";
 
@@ -12,13 +10,7 @@ const loadingVariants = {
   exit: { x: "-12%", transition: EXIT_TRANSITION },
 };
 
-export default function AuthPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace("/onboarding");
-  }, [router]);
-
+export default function AppLoading() {
   return (
     <motion.div
       variants={loadingVariants}

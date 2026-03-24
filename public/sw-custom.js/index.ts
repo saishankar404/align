@@ -1,3 +1,12 @@
+self.addEventListener("message", (event: Event) => {
+  const messageEvent = event as Event & {
+    data?: { type?: string };
+  };
+  if (messageEvent.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("push", (event: Event) => {
   const pushEvent = event as Event & {
     data?: { json: () => { title?: string; body?: string; url?: string } };

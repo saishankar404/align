@@ -23,6 +23,7 @@ import { requestSyncIfCloud } from "@/lib/db/sync";
 import { supabase } from "@/lib/supabase/client";
 import { todayStr } from "@/lib/utils/dates";
 import { getActiveUserId, isCloudMode } from "@/lib/identity/client";
+import { repairCycleSanity } from "@/lib/db/sanity";
 
 export type SheetName =
   | "mark-done"
@@ -97,11 +98,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadAll = useCallback(async (userId: string) => {
     setState((prev) => ({ ...prev, isLoading: true }));
 
+    await repairCycleSanity(userId);
+
     const profile = await db.profiles.get(userId);
     const allCycles = (await db.cycles.where("userId").equals(userId).toArray()).sort((a, b) =>
       a.startDate.localeCompare(b.startDate)
     );
-    const cycle = allCycles.find((item) => item.status === "active") ?? null;
+    const activeCycles = allCycles.filter((item) => item.status === "active");
+    const cycle =
+      activeCycles.sort((a, b) => {
+        const byStart = b.startDate.localeCompare(a.startDate);
+        if (byStart !== 0) return byStart;
+        return b.createdAt.localeCompare(a.createdAt);
+      })[0] ?? null;
 
     if (!cycle) {
       const [allMoves, allCheckins, allLater] = await Promise.all([

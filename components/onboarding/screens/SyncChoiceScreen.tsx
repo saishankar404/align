@@ -17,7 +17,7 @@ export default function SyncChoiceScreen({ startAuth, setData, chooseLocal, back
 
   const onProceed = () => {
     if (selected === "cloud") {
-      void startAuth();
+      void startAuth("signup");
       return;
     }
     if (selected === "local") {

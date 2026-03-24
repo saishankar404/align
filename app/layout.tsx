@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
+import PWAUpdateController from "@/components/pwa/PWAUpdateController";
 
 export const metadata: Metadata = {
   title: "Align.",
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="h-full w-full overflow-hidden">
       <body className="h-full w-full overflow-hidden bg-parchment">
         {children}
+        <PWAUpdateController />
         <PWAInstallPrompt />
       </body>
     </html>

@@ -12,6 +12,7 @@ export default function NightCheckinSheet() {
   const context = useAppContext();
   const [loading, setLoading] = useState<"showed_up" | "avoided" | null>(null);
   const isOpen = context.activeSheet === "night-checkin";
+  const cycleLength = context.currentCycle?.lengthDays ?? context.currentDay;
 
   const writeCheckin = async (status: "showed_up" | "avoided") => {
     if (!context.userId || !context.currentCycle) return;
@@ -39,7 +40,7 @@ export default function NightCheckinSheet() {
       <div className="px-7 pb-2">
         <div className="font-body text-[9px] font-medium tracking-[0.12em] uppercase text-dusk mb-2">Night check-in</div>
         <div className="font-gtw text-[26px] tracking-[-0.025em] leading-[1.15] text-ink mb-2">Did you show up today?</div>
-        <p className="font-body text-[14px] text-dusk leading-[1.65] mb-6">Day {context.currentDay} of {context.currentCycle?.lengthDays ?? 14}. Honest answer only.</p>
+        <p className="font-body text-[14px] text-dusk leading-[1.65] mb-6">Day {context.currentDay} of {cycleLength}. Honest answer only.</p>
 
         <button
           disabled={loading !== null}

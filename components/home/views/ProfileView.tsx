@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Calendar03Icon from "@hugeicons/core-free-icons/dist/esm/Calendar03Icon";
-import ClockCheckIcon from "@hugeicons/core-free-icons/dist/esm/ClockCheckIcon";
 import ArrowUpRight01Icon from "@hugeicons/core-free-icons/dist/esm/ArrowUpRight01Icon";
 import ActivitySparkIcon from "@hugeicons/core-free-icons/dist/esm/ActivitySparkIcon";
 import AiIdeaIcon from "@hugeicons/core-free-icons/dist/esm/AiIdeaIcon";
@@ -15,12 +14,10 @@ import { useHoldBlastAction } from "@/lib/hooks/useHoldBlastAction";
 import { useAppContext } from "@/lib/context/AppContext";
 import { useOnline } from "@/lib/hooks/useOnline";
 import { isLocalMode } from "@/lib/identity/client";
-import { registerPushSubscription } from "@/lib/notifications/push";
 import { db } from "@/lib/db/local";
-import { requestSyncIfCloud, syncAllIfCloud } from "@/lib/db/sync";
+import { syncAllIfCloud } from "@/lib/db/sync";
 import { supabase } from "@/lib/supabase/client";
 import { debug } from "@/lib/utils/debug";
-import AnimatedAutoSize from "@/components/shared/AnimatedAutoSize";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/tokens";
 
 function clearAllClientCookies() {
@@ -78,12 +75,8 @@ export default function ProfileView() {
   const online = useOnline();
   const scrollRef = useRef<HTMLDivElement>(null);
   useLenis(scrollRef);
-  const [showNotif, setShowNotif] = useState(false);
-  const [showTimeDialog, setShowTimeDialog] = useState(false);
   const [showNuclearDialog, setShowNuclearDialog] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [tempMorningTime, setTempMorningTime] = useState("08:00");
-  const [tempNightTime, setTempNightTime] = useState("21:30");
   const [syncState, setSyncState] = useState<"idle" | "syncing" | "ok" | "error">("idle");
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(() =>
     typeof window === "undefined" ? null : window.localStorage.getItem("align_last_sync_at")
@@ -125,20 +118,6 @@ export default function ProfileView() {
               ? "Ready"
               : "Offline";
 
-  const updateProfile = async (
-    updates: Partial<{
-      notifEnabled: boolean;
-      notifMorningTime: string;
-      notifNightTime: string;
-    }>
-  ) => {
-    if (!context.userId) return;
-
-    await db.profiles.update(context.userId, updates);
-    await context.refresh();
-    requestSyncIfCloud(context.userId);
-  };
-
   const syncNow = async () => {
     if (!context.userId || !online || syncState === "syncing" || localMode) return;
     setSyncState("syncing");
@@ -166,29 +145,6 @@ export default function ProfileView() {
         queryParams: { prompt: "select_account" },
       },
     });
-  };
-
-  const toggleNotifications = async () => {
-    if (!context.userId || !profile) return;
-
-    if (!profile.notifEnabled) {
-      const allowed = await registerPushSubscription(context.userId);
-      await updateProfile({ notifEnabled: allowed });
-      return;
-    }
-
-    await updateProfile({ notifEnabled: false });
-  };
-
-  const openTimeDialog = () => {
-    setTempMorningTime(profile?.notifMorningTime ?? "08:00");
-    setTempNightTime(profile?.notifNightTime ?? "21:30");
-    setShowTimeDialog(true);
-  };
-
-  const saveTimes = async () => {
-    await updateProfile({ notifMorningTime: tempMorningTime, notifNightTime: tempNightTime });
-    setShowTimeDialog(false);
   };
 
   const signOut = async () => {
@@ -317,46 +273,21 @@ export default function ProfileView() {
           </div>
 
           <div className="pt-5 border-t border-border">
-            <SettingRow
-              title="Notifications"
-              subtitle={`${profile?.notifMorningTime ?? "08:00"} · ${profile?.notifNightTime ?? "21:30"}`}
-              icon={ClockCheckIcon}
-              onClick={() => setShowNotif((prev) => !prev)}
-            />
-
-            <AnimatedAutoSize className="border-b border-border" transition={{ duration: MOTION_DURATION.smallState, ease: MOTION_EASE.easeInOut, delay: 0.05 }}>
-              {showNotif ? (
-                <div className="py-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-body text-[13px] text-ink">Push reminders</span>
-                    <button onClick={() => { void toggleNotifications(); }} className={`px-3 py-1.5 rounded-full text-[11px] font-medium min-hit-target touch-hit-area ${profile?.notifEnabled ? "bg-ink text-parchment" : "bg-sand text-dusk"}`}>
-                      {profile?.notifEnabled ? "On" : "Off"}
-                    </button>
-                  </div>
-                  <div className="rounded-[16px] bg-sand p-4">
-                    <div className="flex items-center justify-between text-[13px]">
-                      <span className="text-dusk">Morning</span>
-                      <span className="font-gtw text-ink">{profile?.notifMorningTime ?? "08:00"}</span>
-                    </div>
-                    <div className="h-[1px] bg-border my-2" />
-                    <div className="flex items-center justify-between text-[13px]">
-                      <span className="text-dusk">Night</span>
-                      <span className="font-gtw text-ink">{profile?.notifNightTime ?? "21:30"}</span>
-                    </div>
-                    <button
-                      onClick={openTimeDialog}
-                      className="mt-3 w-full rounded-full bg-ink text-parchment py-2.5 font-gtw text-[12px] min-hit-target"
-                    >
-                      Edit times
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-            </AnimatedAutoSize>
+            <div className="w-full flex items-center gap-3.5 py-3.5 border-b border-border text-left opacity-60">
+              <span className="w-[52px] h-[52px] rounded-[18px] bg-[#E6DED1] flex items-center justify-center shrink-0">
+                <span className="font-gtw text-[11px] text-dusk">Soon</span>
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-gtw text-[25px] leading-[0.98] tracking-[-0.022em] text-dusk md:hidden">Notifications</span>
+                <span className="hidden md:block font-gtw text-[20px] leading-[1] tracking-[-0.018em] text-dusk">Notifications</span>
+                <span className="block font-body text-[11px] text-dusk mt-1 truncate">Coming soon</span>
+              </span>
+              <span className="font-gtw text-[11px] text-dusk/70 rounded-full bg-sand px-3 py-1">Coming soon</span>
+            </div>
 
             <SettingRow
               title="Cycle length"
-              subtitle={`${context.currentCycle?.lengthDays ?? 14} days · active`}
+              subtitle={context.currentCycle ? `${context.currentCycle.lengthDays} days · active` : "No active cycle"}
               icon={Calendar03Icon}
               onClick={() => context.openSheet("today-info")}
             />
@@ -451,46 +382,6 @@ export default function ProfileView() {
           </div>
         </div>
       </motion.div>
-
-      {showTimeDialog && typeof document !== "undefined"
-        ? createPortal(
-        <div className="fixed inset-0 z-[80] bg-black/40 flex items-end px-4 pb-[calc(var(--sab)+14px)]">
-          <div className="w-full rounded-[20px] bg-parchment border border-border p-5">
-            <div className="font-body text-[9px] font-medium tracking-[0.1em] uppercase text-dusk mb-1">Notification times</div>
-            <div className="font-gtw text-[30px] tracking-[-0.03em] text-ink mb-4">Edit reminders</div>
-
-            <label className="block text-[12px] text-dusk mb-1">Morning</label>
-            <input
-              type="time"
-              value={tempMorningTime}
-              onChange={(event) => setTempMorningTime(event.target.value)}
-              className="w-full rounded-[10px] border border-border bg-sand px-3 py-3 text-[15px] text-ink mb-3"
-            />
-
-            <label className="block text-[12px] text-dusk mb-1">Night</label>
-            <input
-              type="time"
-              value={tempNightTime}
-              onChange={(event) => setTempNightTime(event.target.value)}
-              className="w-full rounded-[10px] border border-border bg-sand px-3 py-3 text-[15px] text-ink mb-4"
-            />
-
-            <button
-              onClick={() => { void saveTimes(); }}
-              className="w-full rounded-full bg-ink text-parchment py-3 font-gtw text-[13px] mb-2"
-            >
-              Save
-            </button>
-            <button
-              onClick={() => setShowTimeDialog(false)}
-              className="w-full py-2 text-[12px] text-dusk min-hit-target touch-hit-area"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      , document.body)
-        : null}
 
       {showNuclearDialog && typeof document !== "undefined"
         ? createPortal(

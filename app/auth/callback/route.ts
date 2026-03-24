@@ -4,6 +4,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next");
+  const intent = searchParams.get("intent");
   const error = searchParams.get("error");
   const errorCode = searchParams.get("error_code");
   const errorDescription = searchParams.get("error_description");
@@ -14,6 +15,7 @@ export async function GET(request: Request) {
   const onboardingUrl = new URL(`${baseUrl}/onboarding`);
   onboardingUrl.searchParams.set("afterAuth", "1");
   if (next === "link") onboardingUrl.searchParams.set("intent", "link");
+  if (intent === "signup" || intent === "existing") onboardingUrl.searchParams.set("intent", intent);
   if (code) onboardingUrl.searchParams.set("code", code);
   if (error) onboardingUrl.searchParams.set("authError", error);
   if (errorCode) onboardingUrl.searchParams.set("authErrorCode", errorCode);

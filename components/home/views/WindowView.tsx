@@ -56,14 +56,16 @@ export default function WindowView() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const monthRailRef = useRef<HTMLDivElement>(null);
   const monthItemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const didInitMonthRail = useRef(false);
   useLenis(scrollRef);
 
   const [activeMonthKey, setActiveMonthKey] = useState<string>(format(new Date(), "yyyy-MM"));
+  const currentMonthKey = format(new Date(), "yyyy-MM");
 
   const rows = useMemo<WindowRow[]>(() => {
-    if (!context.allCycles.length) return [];
+    const activeCycle = context.currentCycle;
+    if (!activeCycle) return [];
 
-    const cycles = [...context.allCycles].sort((a, b) => a.startDate.localeCompare(b.startDate));
     const movesByDate = new Map<string, typeof context.allMoves>();
     const checkinsByDate = new Map<string, (typeof context.allCheckins)[number]>();
 
@@ -82,6 +84,7 @@ export default function WindowView() {
 
     const rowByDate = new Map<string, WindowRow>();
 
+    const cycles = [...context.allCycles].sort((a, b) => a.startDate.localeCompare(b.startDate));
     for (const cycle of cycles) {
       for (let dayOffset = 0; dayOffset < cycle.lengthDays; dayOffset += 1) {
         const date = addDays(parseISO(cycle.startDate), dayOffset);
@@ -104,11 +107,6 @@ export default function WindowView() {
         });
       }
     }
-
-    const realRows = Array.from(rowByDate.values());
-
-    const activeCycle = context.currentCycle;
-    if (!activeCycle) return realRows;
 
     const futureRows: WindowRow[] = [];
     const futureStart = addDays(parseISO(activeCycle.endDate), 1);
@@ -133,8 +131,24 @@ export default function WindowView() {
       });
     }
 
-    return [...realRows, ...futureRows].sort((a, b) => a.date.getTime() - b.date.getTime());
+    return [...Array.from(rowByDate.values()), ...futureRows].sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [context.allCheckins, context.allCycles, context.allMoves, context.currentCycle]);
+
+  const cycleStart = useMemo(
+    () => (context.currentCycle ? startOfDay(parseISO(context.currentCycle.startDate)) : null),
+    [context.currentCycle]
+  );
+
+  const isPreviousWindowDay = (date: Date) => {
+    if (!cycleStart) return false;
+    return isBefore(startOfDay(date), cycleStart);
+  };
+
+  const monthKind = (monthKey: string): "past" | "current" | "future" => {
+    if (monthKey < currentMonthKey) return "past";
+    if (monthKey > currentMonthKey) return "future";
+    return "current";
+  };
 
   const monthItems = useMemo(() => {
     const seen = new Set<string>();
@@ -152,22 +166,27 @@ export default function WindowView() {
   useEffect(() => {
     if (!monthItems.length) return;
 
-    const currentMonth = format(new Date(), "yyyy-MM");
-    const initialKey = monthItems.some((item) => item.key === currentMonth)
-      ? currentMonth
+    const hasActive = monthItems.some((item) => item.key === activeMonthKey);
+    const initialKey = monthItems.some((item) => item.key === currentMonthKey)
+      ? currentMonthKey
       : monthItems[monthItems.length - 1]?.key;
 
     if (!initialKey) return;
 
-    setActiveMonthKey(initialKey);
+    if (!hasActive) {
+      setActiveMonthKey(initialKey);
+    }
 
     const rail = monthRailRef.current;
-    const target = monthItemRefs.current[initialKey];
+    const targetKey = hasActive ? activeMonthKey : initialKey;
+    const target = monthItemRefs.current[targetKey];
     if (!rail || !target) return;
+    if (didInitMonthRail.current) return;
 
     const left = target.offsetLeft - (rail.clientWidth - target.clientWidth) / 2;
     rail.scrollTo({ left, behavior: "auto" });
-  }, [monthItems]);
+    didInitMonthRail.current = true;
+  }, [activeMonthKey, currentMonthKey, monthItems]);
 
   useEffect(() => {
     const rail = monthRailRef.current;
@@ -222,6 +241,11 @@ export default function WindowView() {
           <div ref={monthRailRef} className="flex items-center gap-1 px-7 overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden cursor-grab active:cursor-grabbing select-none">
             {monthItems.map((month) => {
               const active = month.key === activeMonthKey;
+              const kind = monthKind(month.key);
+              const inactiveClass =
+                kind === "past"
+                  ? "text-[22px] text-dusk opacity-25"
+                  : "text-[22px] text-dusk opacity-45";
               return (
                 <button
                   key={month.key}
@@ -234,7 +258,7 @@ export default function WindowView() {
                   }}
                   className="shrink-0 snap-center py-1 px-5"
                 >
-                  <div className={`font-gtw tracking-[-0.02em] transition-all duration-200 ${active ? "text-[40px] text-ink opacity-100" : "text-[22px] text-dusk opacity-35"}`}>
+                  <div className={`font-gtw tracking-[-0.02em] transition-all duration-200 ${active ? "text-[40px] text-ink opacity-100" : inactiveClass}`}>
                     {month.label}
                   </div>
                 </button>
@@ -267,9 +291,11 @@ export default function WindowView() {
               );
             }
 
+            const previousWindowDay = row.kind === "real" && isPreviousWindowDay(row.date);
+
             return (
               <button key={row.id} onClick={() => context.openSheet("day-detail", { date: row.dateStr })} className="rounded-[20px] p-5 text-ink text-left" style={{ background: row.color }}>
-                <div className="flex items-start justify-between gap-[10px]">
+                <div className={`flex items-start justify-between gap-[10px] ${previousWindowDay ? "opacity-45 grayscale-[20%]" : ""}`}>
                   <div>
                     <div className="font-body text-[9px] font-medium tracking-[0.12em] uppercase mb-1 opacity-50">{row.weekday}</div>
                     {row.isToday ? <div className="font-body text-[8px] font-medium tracking-[0.1em] uppercase bg-black/15 px-2 py-[3px] rounded-full inline-block mb-[6px]">Today</div> : null}

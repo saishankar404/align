@@ -86,7 +86,7 @@ export default function NameScreen({ data, setData, next }: ScreenProps) {
           className="mb-1 cursor-text"
           style={{
             width: "100%",
-            overflow: "hidden",
+            overflow: "visible",
             display: "flex",
             alignItems: "center",
           }}
@@ -98,18 +98,20 @@ export default function NameScreen({ data, setData, next }: ScreenProps) {
           tabIndex={-1}
         >
           <div
-            className="font-gtw font-light tracking-[-0.06em] leading-none inline-flex items-end"
+            className="font-gtw font-light tracking-[-0.06em] inline-flex items-end"
             style={{
               fontSize: `${nameFontSize}px`,
+              lineHeight: 1.08,
               color: hasName ? "#1A1A1A" : "rgba(26,26,26,0.25)",
               whiteSpace: "nowrap",
-              overflow: "hidden",
+              overflow: "visible",
+              paddingBottom: "0.08em",
               maxWidth: "100%",
             }}
           >
-            {nameFocused && !hasName && <span className="inline-block w-[3px] rounded-[2px] bg-slate mr-[6px] animate-[blink_.85s_ease-in-out_infinite] shrink-0" style={{ height: `${Math.max(34, nameFontSize * 0.75)}px` }} />}
+            {nameFocused && !hasName && <span className="inline-block w-[3px] rounded-[2px] bg-slate mr-[6px] animate-[blink_.85s_ease-in-out_infinite] shrink-0" style={{ height: "0.88em", marginBottom: "0.04em" }} />}
             <span>{nameDisplayValue}</span>
-            {nameFocused && hasName && <span className="inline-block w-[3px] rounded-[2px] bg-slate ml-[6px] animate-[blink_.85s_ease-in-out_infinite] shrink-0" style={{ height: `${Math.max(34, nameFontSize * 0.75)}px` }} />}
+            {nameFocused && hasName && <span className="inline-block w-[3px] rounded-[2px] bg-slate ml-[6px] animate-[blink_.85s_ease-in-out_infinite] shrink-0" style={{ height: "0.88em", marginBottom: "0.04em" }} />}
           </div>
         </div>
 
@@ -119,7 +121,7 @@ export default function NameScreen({ data, setData, next }: ScreenProps) {
           className="cursor-text"
           style={{
             width: "100%",
-            overflow: "hidden",
+            overflow: "visible",
             display: "flex",
             alignItems: "center",
           }}
@@ -131,18 +133,20 @@ export default function NameScreen({ data, setData, next }: ScreenProps) {
           tabIndex={-1}
         >
           <div
-            className="font-gtw font-light tracking-[-0.06em] leading-none inline-flex items-end"
+            className="font-gtw font-light tracking-[-0.06em] inline-flex items-end"
             style={{
               fontSize: `${ageFontSize}px`,
+              lineHeight: 1.08,
               color: hasAge ? "#1A1A1A" : "rgba(26,26,26,0.25)",
               whiteSpace: "nowrap",
-              overflow: "hidden",
+              overflow: "visible",
+              paddingBottom: "0.08em",
               maxWidth: "100%",
             }}
           >
-            {ageFocused && !hasAge && <span className="inline-block w-[3px] rounded-[2px] bg-slate mr-[6px] animate-[blink_.85s_ease-in-out_infinite] shrink-0" style={{ height: `${Math.max(34, ageFontSize * 0.75)}px` }} />}
+            {ageFocused && !hasAge && <span className="inline-block w-[3px] rounded-[2px] bg-slate mr-[6px] animate-[blink_.85s_ease-in-out_infinite] shrink-0" style={{ height: "0.88em", marginBottom: "0.04em" }} />}
             <span>{ageDisplayValue}</span>
-            {ageFocused && hasAge && <span className="inline-block w-[3px] rounded-[2px] bg-slate ml-[6px] animate-[blink_.85s_ease-in-out_infinite] shrink-0" style={{ height: `${Math.max(34, ageFontSize * 0.75)}px` }} />}
+            {ageFocused && hasAge && <span className="inline-block w-[3px] rounded-[2px] bg-slate ml-[6px] animate-[blink_.85s_ease-in-out_infinite] shrink-0" style={{ height: "0.88em", marginBottom: "0.04em" }} />}
           </div>
         </div>
       </motion.div>
@@ -174,15 +178,16 @@ export default function NameScreen({ data, setData, next }: ScreenProps) {
       <input
         ref={ageInputRef}
         className="fixed left-[-9999px] top-[-9999px] opacity-0"
-        type="number"
+        type="text"
         inputMode="numeric"
         pattern="[0-9]*"
-        min={13}
-        max={99}
         value={age}
         onFocus={() => setAgeFocused(true)}
         onBlur={() => setAgeFocused(false)}
-        onChange={(event) => setData((prev) => ({ ...prev, age: event.target.value }))}
+        onChange={(event) => {
+          const digitsOnly = event.target.value.replace(/\D+/g, "").slice(0, 2);
+          setData((prev) => ({ ...prev, age: digitsOnly }));
+        }}
       />
     </motion.div>
   );
