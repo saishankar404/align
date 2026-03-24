@@ -17,7 +17,6 @@ import { isLocalMode } from "@/lib/identity/client";
 import { db } from "@/lib/db/local";
 import { syncAllIfCloud } from "@/lib/db/sync";
 import { supabase } from "@/lib/supabase/client";
-import { debug } from "@/lib/utils/debug";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/tokens";
 
 function clearAllClientCookies() {
@@ -77,6 +76,7 @@ export default function ProfileView() {
   useLenis(scrollRef);
   const [showNuclearDialog, setShowNuclearDialog] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
   const [syncState, setSyncState] = useState<"idle" | "syncing" | "ok" | "error">("idle");
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(() =>
     typeof window === "undefined" ? null : window.localStorage.getItem("align_last_sync_at")
@@ -163,19 +163,32 @@ export default function ProfileView() {
 
   const nuclearReset = async () => {
     setIsResetting(true);
+    setResetError(null);
+    let completedReset = false;
     try {
-      let cloudDeleteFailed = false;
       if (!localMode) {
         try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+
           const response = await fetch("/api/account/delete", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              ...(session?.access_token
+                ? { Authorization: `Bearer ${session.access_token}` }
+                : {}),
             },
           });
-          cloudDeleteFailed = !response.ok;
+
+          if (!response.ok) {
+            const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+            throw new Error(payload?.error ?? "Cloud delete failed");
+          }
         } catch {
-          cloudDeleteFailed = true;
+          setResetError("Could not delete synced data. Check your connection and try again.");
+          return;
         }
       }
 
@@ -193,13 +206,13 @@ export default function ProfileView() {
       clearAllClientCookies();
       localStorage.clear();
       sessionStorage.clear();
-      if (cloudDeleteFailed) {
-        debug("nuclear reset cloud delete failed");
-      }
+      completedReset = true;
     } finally {
       setIsResetting(false);
-      setShowNuclearDialog(false);
-      window.location.replace("/onboarding");
+      if (completedReset) {
+        setShowNuclearDialog(false);
+        window.location.replace("/onboarding");
+      }
     }
   };
 
@@ -209,6 +222,7 @@ export default function ProfileView() {
       x: [0, -8, 8, -6, 6, -4, 4, 0],
       transition: { duration: MOTION_DURATION.smallState, ease: MOTION_EASE.easeInOut },
     });
+    setResetError(null);
     setShowNuclearDialog(true);
   };
 
@@ -392,6 +406,11 @@ export default function ProfileView() {
             <p className="font-body text-[13px] leading-[1.6] text-dusk mb-4">
               This removes local data, cache, service workers, cookies, and active session from this browser. In cloud mode, your account and all synced data are deleted too.
             </p>
+            {resetError ? (
+              <div className="mb-4 rounded-[14px] border border-terra/25 bg-terra/10 px-4 py-3 font-body text-[12px] leading-[1.55] text-terra">
+                {resetError}
+              </div>
+            ) : null}
 
             <button
               onClick={() => {
