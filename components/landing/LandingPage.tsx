@@ -22,9 +22,11 @@ import {
   Linkedin,
   Lightbulb,
   Link2,
+  Menu,
   MousePointerClick,
   PieChart,
   Twitter,
+  X,
 } from "lucide-react";
 import { Logo } from "@/components/shared/Logo";
 import UnicornHeroBackground from "@/components/landing/UnicornHeroBackground";
@@ -216,6 +218,7 @@ export default function LandingPage() {
   const [faqProgressKey, setFaqProgressKey] = useState(0);
   const [faqVisible, setFaqVisible] = useState(true);
   const [hiMessage, setHiMessage] = useState("");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const faqDuration = 5000;
   const supportEmail = "saishankar2803@gmail.com";
@@ -451,37 +454,77 @@ export default function LandingPage() {
         className="landing-grain min-h-screen bg-zinc-950 font-body text-zinc-50 selection:bg-indigo-500/30 selection:text-indigo-200"
       >
         <div className="landing-content">
-          <nav className="fixed left-1/2 top-4 z-50 flex w-[min(540px,calc(100vw-20px))] -translate-x-1/2 items-center justify-between gap-3 rounded-full border border-white/5 bg-[#161616]/95 px-3 py-2.5 shadow-2xl backdrop-blur sm:top-8 sm:gap-0 sm:px-1.5 sm:py-1.5 sm:pr-2.5">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <div className="ml-1 flex min-w-0 items-center gap-2.5 self-start sm:self-auto">
-                <div className="flex h-8 w-8 items-center justify-center sm:h-8 sm:w-8">
+          <nav className="fixed left-1/2 top-4 z-50 w-[min(540px,calc(100vw-20px))] -translate-x-1/2 sm:top-8 sm:w-auto">
+            <div className="flex items-center justify-between rounded-full border border-white/5 bg-[#161616]/95 px-3 py-2.5 shadow-2xl backdrop-blur sm:hidden">
+              <div className="ml-1 flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center">
                   <Logo size={30} src="/logo_secondary.svg" priority />
                 </div>
-                <span className="font-gtw text-[18px] leading-none tracking-[-0.03em] text-white sm:text-[22px]">
+                <span className="font-gtw text-[18px] leading-none tracking-[-0.03em] text-white">
                   Align.
                 </span>
               </div>
-              <Link href="/method" className="min-h-[32px] px-1 text-[13px] font-medium text-zinc-300 transition-colors hover:text-white sm:hidden">
-                {COPY.nav.left}
-              </Link>
-            </div>
-            <div className="hidden items-center justify-center gap-6 text-[14px] font-medium text-zinc-300 sm:flex sm:w-auto sm:justify-start">
-              <Link
-                href="/method"
-                className="min-h-[32px] px-1 transition-colors hover:text-white"
+              <button
+                type="button"
+                aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+                aria-expanded={mobileNavOpen}
+                onClick={() => setMobileNavOpen((prev) => !prev)}
+                className="flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full border border-white/5 bg-[#282828] text-white transition-colors hover:bg-[#333]"
               >
-                {COPY.nav.left}
-              </Link>
-              <a href={supportMailto} className="min-h-[32px] px-1 transition-colors hover:text-white">
-                {COPY.nav.right}
-              </a>
+                {mobileNavOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              </button>
             </div>
-            <Link
-              href="/app"
-              className="rounded-full border border-white/5 bg-[#282828] px-4 py-2 text-center text-[13px] font-medium text-white transition-colors hover:bg-[#333] sm:px-5 sm:py-1.5"
-            >
-              {COPY.nav.cta}
-            </Link>
+
+            {mobileNavOpen ? (
+              <div className="mt-3 flex flex-col gap-2 rounded-[1.6rem] border border-white/5 bg-[#161616]/95 p-3 shadow-2xl backdrop-blur sm:hidden">
+                <Link
+                  href="/method"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="rounded-2xl px-4 py-3 text-[14px] font-medium text-zinc-200 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  {COPY.nav.left}
+                </Link>
+                <a
+                  href={supportMailto}
+                  onClick={() => setMobileNavOpen(false)}
+                  className="rounded-2xl px-4 py-3 text-[14px] font-medium text-zinc-200 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  {COPY.nav.right}
+                </a>
+                <Link
+                  href="/app"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="mt-1 rounded-full border border-white/5 bg-[#282828] px-4 py-3 text-center text-[14px] font-medium text-white transition-colors hover:bg-[#333]"
+                >
+                  {COPY.nav.cta}
+                </Link>
+              </div>
+            ) : null}
+
+            <div className="hidden items-center justify-between rounded-full border border-white/5 bg-[#161616] px-1.5 py-1.5 pr-2.5 shadow-2xl sm:flex sm:w-[540px] sm:max-w-[90vw]">
+              <div className="ml-1 flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center">
+                  <Logo size={30} src="/logo_secondary.svg" priority />
+                </div>
+                <span className="font-gtw text-[22px] leading-none tracking-[-0.03em] text-white">
+                  Align.
+                </span>
+              </div>
+              <div className="flex items-center gap-6 text-[14px] font-medium text-zinc-300">
+                <Link href="/method" className="transition-colors hover:text-white">
+                  {COPY.nav.left}
+                </Link>
+                <a href={supportMailto} className="transition-colors hover:text-white">
+                  {COPY.nav.right}
+                </a>
+                <Link
+                  href="/app"
+                  className="rounded-full border border-white/5 bg-[#282828] px-5 py-1.5 font-medium text-white transition-colors hover:bg-[#333]"
+                >
+                  {COPY.nav.cta}
+                </Link>
+              </div>
+            </div>
           </nav>
 
           <div className="relative isolate z-20 overflow-hidden rounded-b-[3.5rem] bg-[#F2EDE4] pb-20 text-zinc-900 shadow-[0_30px_80px_rgba(0,0,0,0.18)] md:rounded-b-[5.5rem]">
