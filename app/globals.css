@@ -1,0 +1,206 @@
+@import url('https://fonts.googleapis.com/css2?family=Satoshi:wght@300;400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "GTW";
+  src: url("/fonts/GTWalsheim-Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GTW";
+  src: url("/fonts/GTWalsheim-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GTW";
+  src: url("/fonts/GTWalsheim-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GTWC";
+  src: url("/fonts/GTWalsheim-CondensedBold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --parchment: #F2EDE4;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#__next {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #F2EDE4;
+}
+
+body {
+  font-family: "Satoshi", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+textarea,
+button {
+  font: inherit;
+}
+
+/* onboarding/home reusable keyframes */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.88); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes floatR {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(3deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.28); }
+}
+
+@keyframes blink {
+  0%, 45% { opacity: 1; }
+  55%, 100% { opacity: 0; }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.45); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes drawPath {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes threadDraw {
+  from { stroke-dashoffset: 600; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* dot wave light */
+@keyframes wv5 { 0%,100%{fill:#1A1A1A}35%{fill:#5DBF8A}65%{fill:#1A1A1A} }
+@keyframes wv6 { 0%,100%{fill:#DDD7CC}35%{fill:#5DBF8A}65%{fill:#DDD7CC} }
+@keyframes wv7 { 0%,100%{fill:#DDD7CC}35%{fill:#5DBF8A}65%{fill:#DDD7CC} }
+@keyframes wv8 { 0%,100%{fill:#DDD7CC}40%{fill:#B8AEE0}68%{fill:#DDD7CC} }
+@keyframes wv9 { 0%,100%{fill:#DDD7CC}40%{fill:#B8AEE0}68%{fill:#DDD7CC} }
+@keyframes wv10 { 0%,100%{fill:#B8AEE0}45%{fill:#E8694A}72%{fill:#B8AEE0} }
+@keyframes wv11 { 0%,100%{fill:#DDD7CC}45%{fill:#E8694A}72%{fill:#DDD7CC} }
+@keyframes wv12 { 0%,100%{fill:#DDD7CC}50%{fill:#5DBF8A}76%{fill:#DDD7CC} }
+@keyframes wv13 { 0%,100%{fill:#DDD7CC}50%{fill:#5DBF8A}76%{fill:#DDD7CC} }
+
+@keyframes tkShow {
+  0%,28% { opacity: 0; }
+  38%,62% { opacity: 1; }
+  72%,100% { opacity: 0; }
+}
+
+@keyframes crShow {
+  0%,42% { opacity: 0; }
+  52%,70% { opacity: 1; }
+  80%,100% { opacity: 0; }
+}
+
+/* welcome dark wave */
+@keyframes ww5 { 0%,100%{fill:#5DBF8A}35%{fill:rgba(255,255,255,.15)}65%{fill:#5DBF8A} }
+@keyframes ww6 { 0%,100%{fill:rgba(255,255,255,.12)}35%{fill:#5DBF8A}65%{fill:rgba(255,255,255,.12)} }
+@keyframes ww7 { 0%,100%{fill:rgba(255,255,255,.09)}35%{fill:#5DBF8A}65%{fill:rgba(255,255,255,.09)} }
+@keyframes ww8 { 0%,100%{fill:rgba(255,255,255,.09)}40%{fill:#B8AEE0}68%{fill:rgba(255,255,255,.09)} }
+@keyframes ww9 { 0%,100%{fill:#B8AEE0}40%{fill:rgba(255,255,255,.12)}68%{fill:#B8AEE0} }
+@keyframes ww10 { 0%,100%{fill:rgba(255,255,255,.07)}45%{fill:#B8AEE0}72%{fill:rgba(255,255,255,.07)} }
+@keyframes ww11 { 0%,100%{fill:rgba(255,255,255,.05)}45%{fill:#5DBF8A}72%{fill:rgba(255,255,255,.05)} }
+@keyframes ww12 { 0%,100%{fill:rgba(255,255,255,.04)}50%{fill:rgba(255,255,255,.2)}76%{fill:rgba(255,255,255,.04)} }
+@keyframes ww13 { 0%,100%{fill:rgba(255,255,255,.03)}50%{fill:rgba(255,255,255,.14)}76%{fill:rgba(255,255,255,.03)} }
+
+@keyframes nSlide {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes nFloat {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* classes used by DotGrid */
+.dg0,.dg1,.dg2,.dg3,.dg4{fill:#1A1A1A}
+.dg5{fill:#1A1A1A;animation:wv5 3.8s ease-in-out 1s infinite}
+.dg6{fill:#DDD7CC;animation:wv6 3.8s ease-in-out 1.2s infinite}
+.dg7{fill:#DDD7CC;animation:wv7 3.8s ease-in-out 1.4s infinite}
+.dg8{fill:#DDD7CC;animation:wv8 3.8s ease-in-out 1.6s infinite}
+.dg9{fill:#DDD7CC;animation:wv9 3.8s ease-in-out 1.8s infinite}
+.dg10{fill:#B8AEE0;animation:wv10 3.8s ease-in-out 2s infinite}
+.dg11{fill:#DDD7CC;animation:wv11 3.8s ease-in-out 2.2s infinite}
+.dg12{fill:#DDD7CC;animation:wv12 3.8s ease-in-out 2.4s infinite}
+.dg13{fill:#DDD7CC;animation:wv13 3.8s ease-in-out 2.6s infinite}
+
+.wdg0,.wdg1,.wdg2,.wdg3,.wdg4{fill:#5DBF8A}
+.wdg5{animation:ww5 3.8s ease-in-out 1s infinite}
+.wdg6{animation:ww6 3.8s ease-in-out 1.2s infinite}
+.wdg7{animation:ww7 3.8s ease-in-out 1.4s infinite}
+.wdg8{animation:ww8 3.8s ease-in-out 1.6s infinite}
+.wdg9{animation:ww9 3.8s ease-in-out 1.8s infinite}
+.wdg10{animation:ww10 3.8s ease-in-out 2s infinite}
+.wdg11{animation:ww11 3.8s ease-in-out 2.2s infinite}
+.wdg12{animation:ww12 3.8s ease-in-out 2.4s infinite}
+.wdg13{animation:ww13 3.8s ease-in-out 2.6s infinite}
+
+.tk3{animation:tkShow 3.8s ease-in-out 3s infinite}
+.cr10{animation:crShow 3.8s ease-in-out 2s infinite}
+.tk12{animation:tkShow 3.8s ease-in-out 2.4s infinite}
+
+.nc1{animation:nSlide .5s cubic-bezier(.22,1,.36,1) .2s both,nFloat 3.8s ease-in-out 1.2s infinite}
+.nc2{animation:nSlide .5s cubic-bezier(.22,1,.36,1) .38s both,nFloat 3.8s ease-in-out 2.1s infinite}
+
+.thread-draw {
+  stroke-dasharray: 600;
+  animation: threadDraw .55s cubic-bezier(.22,1,.36,1) both;
+}
+
+.navbar-safe {
+  padding-bottom: calc(var(--sab) + 8px);
+}
