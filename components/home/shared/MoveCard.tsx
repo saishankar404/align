@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { LocalDirection, LocalMove } from "@/lib/db/local";
 import { MOTION_DURATION, MOTION_EASE, MOTION_SPRING, TAP_SCALE } from "@/lib/motion/tokens";
 
@@ -41,21 +41,21 @@ export default function MoveCard({ move, direction, tone, onCardTap, onCheckTap,
   const deleteTimerRef = useRef<number | null>(null);
   const [holding, setHolding] = useState(false);
 
-  const stopFrame = () => {
+  const stopFrame = useCallback(() => {
     if (rafRef.current !== null) {
       window.cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-  };
+  }, []);
 
-  const recedeOverlay = () => {
+  const recedeOverlay = useCallback(() => {
     if (!overlayRef.current) return;
     overlayRef.current.style.transition = `transform ${MOTION_DURATION.smallState}s ${EASE_IN_OUT_CSS}, opacity ${MOTION_DURATION.smallState}s ${EASE_IN_OUT_CSS}`;
     overlayRef.current.style.transform = "scaleY(0)";
     overlayRef.current.style.opacity = "0";
-  };
+  }, []);
 
-  const beginFillAnimation = (target: EventTarget | null): boolean => {
+  const beginFillAnimation = useCallback((target: EventTarget | null): boolean => {
     if (!canDelete) return false;
     if (gestureStateRef.current === "deleting") return false;
 
@@ -134,9 +134,9 @@ export default function MoveCard({ move, direction, tone, onCardTap, onCheckTap,
 
     rafRef.current = window.requestAnimationFrame(step);
     return true;
-  };
+  }, [canDelete, move.id, onDelete, stopFrame]);
 
-  const startHold = (target: EventTarget | null) => {
+  const startHold = useCallback((target: EventTarget | null) => {
     if (!canDelete) return;
     if (gestureStateRef.current === "deleting") return;
 
@@ -149,9 +149,9 @@ export default function MoveCard({ move, direction, tone, onCardTap, onCheckTap,
       holdDelayTimerRef.current = null;
       beginFillAnimation(target);
     }, HOLD_START_DELAY_MS);
-  };
+  }, [beginFillAnimation, canDelete]);
 
-  const cancelHold = () => {
+  const cancelHold = useCallback(() => {
     if (holdDelayTimerRef.current) {
       clearTimeout(holdDelayTimerRef.current);
       holdDelayTimerRef.current = null;
@@ -163,7 +163,7 @@ export default function MoveCard({ move, direction, tone, onCardTap, onCheckTap,
     setHolding(false);
     stopFrame();
     recedeOverlay();
-  };
+  }, [recedeOverlay, stopFrame]);
 
   const releaseHold = (target: EventTarget | null, source: "mouse" | "touch") => {
     if (holdDelayTimerRef.current) {
@@ -232,7 +232,7 @@ export default function MoveCard({ move, direction, tone, onCardTap, onCheckTap,
       if (fadeTimerRef.current !== null) window.clearTimeout(fadeTimerRef.current);
       if (deleteTimerRef.current !== null) window.clearTimeout(deleteTimerRef.current);
     };
-  }, [move.id, onDelete]);
+  }, [cancelHold, startHold, stopFrame]);
 
   useEffect(() => {
     const scrollParent = cardRef.current?.closest("[data-scroll-container]");
@@ -241,7 +241,7 @@ export default function MoveCard({ move, direction, tone, onCardTap, onCheckTap,
     const cancel = () => cancelHold();
     scrollParent.addEventListener("scroll", cancel, { passive: true });
     return () => scrollParent.removeEventListener("scroll", cancel);
-  }, []);
+  }, [cancelHold]);
 
   return (
     <motion.div

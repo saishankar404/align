@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import ArrowLeft01Icon from "@hugeicons/core-free-icons/dist/esm/ArrowLeft01Icon";
@@ -199,7 +199,7 @@ export default function OnboardingFlow() {
     setShowFreshStartWarning(false);
   }, [linkState.mode, linkState.status]);
 
-  const completeLinkWithLocal = async (localUserId: string, cloudUserId: string) => {
+  const completeLinkWithLocal = useCallback(async (localUserId: string, cloudUserId: string) => {
     setLinkState({ status: "merging", localUserId, cloudUserId, message: "Moving this device data to your account..." });
 
     await clearRemoteUserData(cloudUserId);
@@ -267,9 +267,9 @@ export default function OnboardingFlow() {
     localStorage.removeItem(LINK_PENDING_LOCAL_USER_ID_KEY);
     await syncAllIfCloud(cloudUserId);
     router.push("/home");
-  };
+  }, [router]);
 
-  const completeLinkWithCloud = async (localUserId: string, cloudUserId: string) => {
+  const completeLinkWithCloud = useCallback(async (localUserId: string, cloudUserId: string) => {
     setLinkState({ status: "merging", localUserId, cloudUserId, message: "Switching this device to cloud data..." });
     await clearLocalUserData(localUserId);
 
@@ -277,9 +277,9 @@ export default function OnboardingFlow() {
     localStorage.removeItem(LINK_PENDING_LOCAL_USER_ID_KEY);
     await syncAllIfCloud(cloudUserId);
     router.push("/home");
-  };
+  }, [router]);
 
-  const cleanupAuthQueryParams = () => {
+  const cleanupAuthQueryParams = useCallback(() => {
     const cleanUrl = new URL(window.location.href);
     cleanUrl.searchParams.delete("afterAuth");
     cleanUrl.searchParams.delete("code");
@@ -288,9 +288,9 @@ export default function OnboardingFlow() {
     cleanUrl.searchParams.delete("authErrorDescription");
     cleanUrl.searchParams.delete("intent");
     window.history.replaceState({}, "", `${cleanUrl.pathname}${cleanUrl.search}`);
-  };
+  }, []);
 
-  const adoptCloudAccountData = async (cloudUserId: string) => {
+  const adoptCloudAccountData = useCallback(async (cloudUserId: string) => {
     setLinkState({
       status: "merging",
       mode: "signup",
@@ -304,9 +304,9 @@ export default function OnboardingFlow() {
     cleanupAuthQueryParams();
     await syncAllIfCloud(cloudUserId);
     router.push("/home");
-  };
+  }, [cleanupAuthQueryParams, router]);
 
-  const startFreshWithCloudAccount = async (cloudUserId: string) => {
+  const startFreshWithCloudAccount = useCallback(async (cloudUserId: string) => {
     setLinkState({
       status: "merging",
       mode: "signup",
@@ -325,9 +325,9 @@ export default function OnboardingFlow() {
     setStep(FIRST_STORY_STEP);
     setLinkState({ status: "idle" });
     cleanupAuthQueryParams();
-  };
+  }, [cleanupAuthQueryParams]);
 
-  const handleSignedInIntent = async (cloudUserId: string, intent: string | null): Promise<void> => {
+  const handleSignedInIntent = useCallback(async (cloudUserId: string, intent: string | null): Promise<void> => {
     if (intent === "link") {
       const localUserId = localStorage.getItem(LINK_PENDING_LOCAL_USER_ID_KEY);
       if (!localUserId || localUserId === cloudUserId) {
@@ -402,7 +402,7 @@ export default function OnboardingFlow() {
     setData((prev) => ({ ...prev, saveError: null }));
     setStep((prev) => (prev < FIRST_STORY_STEP ? FIRST_STORY_STEP : prev));
     cleanupAuthQueryParams();
-  };
+  }, [adoptCloudAccountData, cleanupAuthQueryParams, completeLinkWithCloud, completeLinkWithLocal, router]);
 
   useEffect(() => {
     const run = async () => {
@@ -456,7 +456,7 @@ export default function OnboardingFlow() {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [router]);
+  }, [handleSignedInIntent]);
 
   const next = () => {
     if (step === 5) {

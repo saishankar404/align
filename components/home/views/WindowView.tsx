@@ -52,7 +52,7 @@ function colorForDate(dateStr: string): string {
 }
 
 export default function WindowView() {
-  const context = useAppContext();
+  const { allCheckins, allCycles, allMoves, currentCycle, openSheet } = useAppContext();
   const scrollRef = useRef<HTMLDivElement>(null);
   const monthRailRef = useRef<HTMLDivElement>(null);
   const monthItemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -63,13 +63,13 @@ export default function WindowView() {
   const currentMonthKey = format(new Date(), "yyyy-MM");
 
   const rows = useMemo<WindowRow[]>(() => {
-    const activeCycle = context.currentCycle;
+    const activeCycle = currentCycle;
     if (!activeCycle) return [];
 
-    const movesByDate = new Map<string, typeof context.allMoves>();
-    const checkinsByDate = new Map<string, (typeof context.allCheckins)[number]>();
+    const movesByDate = new Map<string, typeof allMoves>();
+    const checkinsByDate = new Map<string, (typeof allCheckins)[number]>();
 
-    for (const move of context.allMoves) {
+    for (const move of allMoves) {
       const existing = movesByDate.get(move.date);
       if (existing) {
         existing.push(move);
@@ -78,13 +78,13 @@ export default function WindowView() {
       }
     }
 
-    for (const checkin of context.allCheckins) {
+    for (const checkin of allCheckins) {
       checkinsByDate.set(checkin.date, checkin);
     }
 
     const rowByDate = new Map<string, WindowRow>();
 
-    const cycles = [...context.allCycles].sort((a, b) => a.startDate.localeCompare(b.startDate));
+    const cycles = [...allCycles].sort((a, b) => a.startDate.localeCompare(b.startDate));
     for (const cycle of cycles) {
       for (let dayOffset = 0; dayOffset < cycle.lengthDays; dayOffset += 1) {
         const date = addDays(parseISO(cycle.startDate), dayOffset);
@@ -132,11 +132,11 @@ export default function WindowView() {
     }
 
     return [...Array.from(rowByDate.values()), ...futureRows].sort((a, b) => a.date.getTime() - b.date.getTime());
-  }, [context.allCheckins, context.allCycles, context.allMoves, context.currentCycle]);
+  }, [allCheckins, allCycles, allMoves, currentCycle]);
 
   const cycleStart = useMemo(
-    () => (context.currentCycle ? startOfDay(parseISO(context.currentCycle.startDate)) : null),
-    [context.currentCycle]
+    () => (currentCycle ? startOfDay(parseISO(currentCycle.startDate)) : null),
+    [currentCycle]
   );
 
   const isPreviousWindowDay = (date: Date) => {
@@ -294,7 +294,7 @@ export default function WindowView() {
             const previousWindowDay = row.kind === "real" && isPreviousWindowDay(row.date);
 
             return (
-              <button key={row.id} onClick={() => context.openSheet("day-detail", { date: row.dateStr })} className="rounded-[20px] p-5 text-ink text-left" style={{ background: row.color }}>
+              <button key={row.id} onClick={() => openSheet("day-detail", { date: row.dateStr })} className="rounded-[20px] p-5 text-ink text-left" style={{ background: row.color }}>
                 <div className={`flex items-start justify-between gap-[10px] ${previousWindowDay ? "opacity-45 grayscale-[20%]" : ""}`}>
                   <div>
                     <div className="font-body text-[9px] font-medium tracking-[0.12em] uppercase mb-1 opacity-50">{row.weekday}</div>
