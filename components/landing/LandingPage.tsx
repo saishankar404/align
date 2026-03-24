@@ -1316,7 +1316,7 @@ export default function LandingPage() {
                       {COPY.footer.support}
                     </a>
                     <a
-                      href="https://github.com/saishankar404/align_v2"
+                      href="https://github.com/saishankar404/align"
                       target="_blank"
                       rel="noreferrer"
                       className="transition-colors hover:text-zinc-300"
@@ -1357,7 +1357,7 @@ export default function LandingPage() {
                           <Linkedin className="h-[18px] w-[18px] stroke-[1.5]" />
                         </a>
                         <a
-                          href="https://github.com/saishankar404/align_v2"
+                          href="https://github.com/saishankar404/align"
                           target="_blank"
                           rel="noreferrer"
                           className="transition-colors hover:text-white"
