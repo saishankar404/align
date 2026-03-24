@@ -50,7 +50,6 @@ const withPWA = nextPwa.default({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   webpack: (config, { dev }) => {
-    // Avoid large filesystem cache writes in local dev on constrained disks.
     if (dev) {
       config.cache = false;
     }

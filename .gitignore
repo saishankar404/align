@@ -44,3 +44,9 @@ next-env.d.ts
 # local agent metadata
 .agents/
 skills-lock.json
+
+# local working notes and exports
+CLAUDE.md
+align-home.html
+align-onboarding.html
+align-style-guide-final.html

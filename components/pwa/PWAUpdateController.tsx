@@ -75,9 +75,7 @@ export default function PWAUpdateController() {
             }
           });
         });
-      } catch {
-        // no-op
-      }
+      } catch {}
     };
 
     const onControllerChange = () => {
@@ -95,9 +93,7 @@ export default function PWAUpdateController() {
 
     void attachRegistrationListeners();
     void navigator.serviceWorker.getRegistration().then((registration) => {
-      registration?.update().catch(() => {
-        // no-op
-      });
+      registration?.update().catch(() => {});
     });
 
     return () => {
