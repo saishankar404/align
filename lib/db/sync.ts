@@ -291,6 +291,9 @@ export async function deleteMoveWithTombstone(userId: string, moveId: string): P
   const now = new Date().toISOString();
 
   await db.transaction("rw", db.moves, db.pendingDeletes, async () => {
+    const move = await db.moves.get(moveId);
+    if (!move || move.userId !== userId || move.status === "done") return;
+
     await db.moves.delete(moveId);
     await db.pendingDeletes.put({
       key,

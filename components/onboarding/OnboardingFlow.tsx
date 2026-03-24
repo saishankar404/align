@@ -290,7 +290,7 @@ export default function OnboardingFlow() {
     window.history.replaceState({}, "", `${cleanUrl.pathname}${cleanUrl.search}`);
   };
 
-  const useCloudAccountData = async (cloudUserId: string) => {
+  const adoptCloudAccountData = async (cloudUserId: string) => {
     setLinkState({
       status: "merging",
       mode: "signup",
@@ -393,7 +393,7 @@ export default function OnboardingFlow() {
     if (intent === "existing") {
       const remoteHasData = await hasAnyRemoteData(cloudUserId);
       if (remoteHasData) {
-        await useCloudAccountData(cloudUserId);
+        await adoptCloudAccountData(cloudUserId);
         return;
       }
     }
@@ -621,7 +621,7 @@ export default function OnboardingFlow() {
               <div className="space-y-2">
                 <button
                   onClick={() => {
-                    void useCloudAccountData(linkState.cloudUserId as string);
+                    void adoptCloudAccountData(linkState.cloudUserId as string);
                   }}
                   className="w-full rounded-full bg-slate text-ink py-[14px] font-gtw text-[14px] tracking-[0.02em]"
                 >

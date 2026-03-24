@@ -25,6 +25,7 @@ const EASE_IN_OUT_CSS = "cubic-bezier(0.4,0,0.2,1)";
 
 export default function MoveCard({ move, direction, tone, onCardTap, onCheckTap, onDelete }: MoveCardProps) {
   const done = move.status === "done";
+  const canDelete = !done;
   const cardRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -55,6 +56,7 @@ export default function MoveCard({ move, direction, tone, onCardTap, onCheckTap,
   };
 
   const beginFillAnimation = (target: EventTarget | null): boolean => {
+    if (!canDelete) return false;
     if (gestureStateRef.current === "deleting") return false;
 
     const targetElement = target instanceof Element ? target : null;
@@ -135,6 +137,7 @@ export default function MoveCard({ move, direction, tone, onCardTap, onCheckTap,
   };
 
   const startHold = (target: EventTarget | null) => {
+    if (!canDelete) return;
     if (gestureStateRef.current === "deleting") return;
 
     if (holdDelayTimerRef.current) {
@@ -288,15 +291,17 @@ export default function MoveCard({ move, direction, tone, onCardTap, onCheckTap,
         }}
       />
 
-      <motion.div
-        initial={false}
-        animate={{ opacity: holding ? 1 : 0, scale: holding ? 1 : 0.94, y: holding ? 0 : -2 }}
-        transition={{ duration: MOTION_DURATION.feedback, ease: MOTION_EASE.easeOut }}
-        className="absolute top-[12px] right-[12px] z-[2] pointer-events-none rounded-full px-[9px] py-[5px] font-body text-[9px] font-medium tracking-[0.09em] uppercase"
-        style={{ background: "rgba(232,105,74,0.16)", color: "#E8694A" }}
-      >
-        Hold to delete
-      </motion.div>
+      {canDelete ? (
+        <motion.div
+          initial={false}
+          animate={{ opacity: holding ? 1 : 0, scale: holding ? 1 : 0.94, y: holding ? 0 : -2 }}
+          transition={{ duration: MOTION_DURATION.feedback, ease: MOTION_EASE.easeOut }}
+          className="absolute top-[12px] right-[12px] z-[2] pointer-events-none rounded-full px-[9px] py-[5px] font-body text-[9px] font-medium tracking-[0.09em] uppercase"
+          style={{ background: "rgba(232,105,74,0.16)", color: "#E8694A" }}
+        >
+          Hold to delete
+        </motion.div>
+      ) : null}
 
       <div className="relative z-[1]">
         <div className="flex items-center justify-between mb-[10px]">
@@ -308,12 +313,14 @@ export default function MoveCard({ move, direction, tone, onCardTap, onCheckTap,
             transition={MOTION_SPRING.press}
             onClick={(event) => {
               event.stopPropagation();
+              if (done) return;
               onCheckTap();
             }}
             onKeyDown={(event) => {
               if (event.key !== "Enter" && event.key !== " ") return;
               event.preventDefault();
               event.stopPropagation();
+              if (done) return;
               onCheckTap();
             }}
             className={`shrink-0 w-[22px] h-[22px] rounded-full border-[1.5px] flex items-center justify-center min-hit-target touch-hit-area ${done ? "bg-ink border-ink" : "bg-transparent border-ink/20"}`}

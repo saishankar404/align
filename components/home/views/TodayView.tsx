@@ -8,7 +8,6 @@ import MoveCard from "@/components/home/shared/MoveCard";
 import SectionHeader from "@/components/home/shared/SectionHeader";
 import { useAppContext } from "@/lib/context/AppContext";
 import { useLenis } from "@/hooks/useLenis";
-import { db } from "@/lib/db/local";
 import { deleteMoveWithTombstone, requestSyncIfCloud } from "@/lib/db/sync";
 
 const dirColorClass = {
@@ -58,16 +57,10 @@ export default function TodayView({ onOpenLaterTab }: TodayViewProps) {
   const peekLater = sortedLater.slice(0, 3);
   const nextMoveWord = context.todayMoves.length === 0 ? "first" : context.todayMoves.length === 1 ? "second" : "third";
 
-  const toggleDoneToPending = async (moveId: string) => {
-    if (!context.userId) return;
-    const now = new Date().toISOString();
-    await db.moves.update(moveId, { status: "pending", doneAt: undefined, updatedAt: now, _synced: 0 });
-    await context.refresh();
-    requestSyncIfCloud(context.userId);
-  };
-
   const handleDeleteMove = async (id: string) => {
     if (!context.userId) return;
+    const move = context.todayMoves.find((item) => item.id === id);
+    if (!move || move.status === "done") return;
     await deleteMoveWithTombstone(context.userId, id);
     await context.refresh();
     requestSyncIfCloud(context.userId);
@@ -110,9 +103,7 @@ export default function TodayView({ onOpenLaterTab }: TodayViewProps) {
                 onCheckTap={() => {
                   if (move.status === "pending") {
                     context.openSheet("mark-done", { move });
-                    return;
                   }
-                  void toggleDoneToPending(move.id);
                 }}
                 onDelete={(id) => {
                   void handleDeleteMove(id);
