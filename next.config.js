@@ -6,7 +6,6 @@ const withPWA = nextPwa.default({
   register: true,
   reloadOnOnline: false,
   cacheStartUrl: false,
-  customWorkerSrc: "public/sw-custom.js",
   publicExcludes: [
     "!fonts/**/*",
     "!fonts/satoshi_fonts/**/*",

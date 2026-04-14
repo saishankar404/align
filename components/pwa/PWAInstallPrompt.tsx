@@ -23,15 +23,14 @@ function isStandaloneMode(): boolean {
   return window.matchMedia("(display-mode: standalone)").matches || nav.standalone === true;
 }
 
-function getInstallHint(): string {
+function isIOS(): boolean {
+  if (typeof window === "undefined") return false;
   const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes("safari") && !ua.includes("chrome") && !ua.includes("android")) {
-    return "Use Share > Add to Home Screen.";
-  }
-  if (ua.includes("firefox")) {
-    return "Use browser menu > Install app.";
-  }
-  return "Use browser menu > Install app.";
+  return (
+    (/iphone|ipad|ipod/.test(ua) && !ua.includes("safari")) ||
+    (ua.includes("safari") && !ua.includes("chrome") && !ua.includes("android")) ||
+    ((window.navigator as Navigator & { standalone?: boolean }).standalone === true)
+  );
 }
 
 export default function PWAInstallPrompt() {
@@ -39,8 +38,7 @@ export default function PWAInstallPrompt() {
   const [visible, setVisible] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [promptEvent, setPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showHint, setShowHint] = useState(false);
-  const [isInstalling, setIsInstalling] = useState(false);
+  const [isIOSDevice, setIsIOSDevice] = useState(false);
 
   const shouldRenderOnPath = useMemo(
     () => pathname.startsWith("/home") || pathname.startsWith("/onboarding"),
@@ -49,6 +47,7 @@ export default function PWAInstallPrompt() {
 
   useEffect(() => {
     if (!shouldRenderOnPath) return;
+    setIsIOSDevice(isIOS());
     const dismissed = localStorage.getItem("align_install_prompt_dismissed") === "1";
     const standalone = isStandaloneMode();
     setInstalled(standalone);
@@ -84,26 +83,24 @@ export default function PWAInstallPrompt() {
     localStorage.setItem("align_install_prompt_dismissed", "1");
   };
 
-  const install = async () => {
-    setIsInstalling(true);
+  const handleInstall = async () => {
+    if (isIOSDevice) {
+      return;
+    }
     if (!promptEvent) {
-      setShowHint(true);
-      setIsInstalling(false);
       return;
     }
     await promptEvent.prompt();
     const result = await promptEvent.userChoice;
     if (result.outcome === "accepted") {
       setVisible(false);
-      setIsInstalling(false);
-      return;
     }
-    setShowHint(true);
-    setIsInstalling(false);
   };
 
   const PromptLayer = () => {
     const isPresent = useIsPresent();
+    const isIOSNative = isIOSDevice && !promptEvent;
+
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -118,28 +115,42 @@ export default function PWAInstallPrompt() {
           className="w-full rounded-[20px] bg-parchment border border-border px-5 py-4 shadow-[0_20px_70px_rgba(0,0,0,.22)]"
         >
           <div className="font-body text-[9px] font-medium tracking-[0.12em] uppercase text-dusk mb-1">Best experience</div>
-          <div className="font-gtw text-[27px] leading-[1.05] tracking-[-0.03em] text-ink mb-2">Install Align.</div>
-          <p className="font-body text-[13px] leading-[1.6] text-dusk mb-4">
-            Install for faster launch, offline access, and cleaner full-screen experience.
-          </p>
-          {showHint ? (
-            <p className="font-body text-[12px] leading-[1.55] text-ink mb-3">{getInstallHint()}</p>
-          ) : null}
+          
+          {isIOSNative ? (
+            <>
+              <div className="font-gtw text-[27px] leading-[1.05] tracking-[-0.03em] text-ink mb-2">Add to Home Screen</div>
+              <p className="font-body text-[13px] leading-[1.6] text-dusk mb-4">
+                Tap the Share button below, then tap "Add to Home Screen" for the full app experience.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="font-gtw text-[27px] leading-[1.05] tracking-[-0.03em] text-ink mb-2">Install Align.</div>
+              <p className="font-body text-[13px] leading-[1.6] text-dusk mb-4">
+                Install for faster launch, offline access, and cleaner full-screen experience.
+              </p>
+            </>
+          )}
+          
           <div className="flex items-center gap-2">
-            <motion.button
-              whileTap={{ scale: TAP_SCALE.default }}
-              transition={MOTION_SPRING.press}
-              onClick={() => {
-                void install();
-              }}
-              disabled={!isPresent || isInstalling}
-              className="flex-1 rounded-full bg-ink text-parchment py-[12px] font-gtw text-[13px] tracking-[0.02em] min-hit-target"
-            >
-              {isInstalling ? "Installing..." : "Install"}
-            </motion.button>
+            {isIOSNative ? (
+              <div className="flex-1 rounded-full bg-ink text-parchment py-[12px] font-gtw text-[13px] tracking-[0.02em] text-center">
+                Tap Share → Add to Home
+              </div>
+            ) : (
+              <motion.button
+                whileTap={{ scale: TAP_SCALE.default }}
+                transition={MOTION_SPRING.press}
+                onClick={handleInstall}
+                disabled={!isPresent || !promptEvent}
+                className="flex-1 rounded-full bg-ink text-parchment py-[12px] font-gtw text-[13px] tracking-[0.02em] min-hit-target"
+              >
+                Install
+              </motion.button>
+            )}
             <button
               onClick={dismiss}
-              disabled={!isPresent || isInstalling}
+              disabled={!isPresent}
               className="rounded-full border border-bs bg-sand text-dusk px-4 py-[12px] font-body text-[12px] min-hit-target touch-hit-area transition-colors"
               style={{ transitionDuration: `${MOTION_DURATION.hover}s` }}
             >
