@@ -21,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-title" content="Align" />
       </head>
       <body className="h-full w-full bg-parchment">
+        {children}
         <script
           dangerouslySetInnerHTML={{
             __html: `
