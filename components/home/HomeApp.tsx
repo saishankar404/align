@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Calendar03Icon from "@hugeicons/core-free-icons/dist/esm/Calendar03Icon";
 import Home01Icon from "@hugeicons/core-free-icons/dist/esm/Home01Icon";
@@ -25,7 +26,7 @@ import DayDetailSheet from "./sheets/DayDetailSheet";
 import DirectionsSheet from "./sheets/DirectionsSheet";
 import TipsSheet from "./sheets/TipsSheet";
 import WindowClosedFlow from "./WindowClosedFlow";
-import { useAppContext } from "@/lib/context/AppContext";
+import { useAppContext, type SheetName } from "@/lib/context/AppContext";
 import { isCycleExpired } from "@/lib/cycle/close";
 import { Logo } from "@/components/shared/Logo";
 import { ENTER_TRANSITION, EXIT_TRANSITION, MOTION_SPRING, TAP_SCALE, VIEW_TRANSITION } from "@/lib/motion/tokens";
@@ -62,6 +63,7 @@ function NavIcon({ id, active }: { id: ViewId; active: boolean }) {
 
 export default function HomeApp() {
   const context = useAppContext();
+  const searchParams = useSearchParams();
   const [view, setView] = useState<ViewId>("home");
   const [selectedTab, setSelectedTab] = useState<ViewId>("home");
   const [direction, setDirection] = useState(1);
@@ -76,12 +78,40 @@ export default function HomeApp() {
   };
 
   useEffect(() => {
-    const sheet = new URL(window.location.href).searchParams.get("sheet");
-    if (sheet === "night-checkin") {
-      window.setTimeout(() => context.openSheet("night-checkin"), 800);
-      window.history.replaceState({}, "", "/home");
+    const sheet = searchParams.get("sheet");
+    const viewParam = searchParams.get("view");
+    const windowClosed = searchParams.get("windowClosed");
+    const validViews: ViewId[] = ["home", "window", "later", "profile"];
+    const validSheets: SheetName[] = [
+      "mark-done",
+      "showed-up",
+      "night-checkin",
+      "avoided",
+      "today-info",
+      "tips",
+      "add-move",
+      "add-later",
+      "directions",
+      "direction-detail",
+      "later-item",
+      "day-detail",
+    ];
+
+    if (viewParam && validViews.includes(viewParam as ViewId)) {
+      const v = viewParam as ViewId;
+      setView(v);
+      setSelectedTab(v);
+      setDirection(1);
     }
-  }, [context]);
+
+    if (sheet && validSheets.includes(sheet as SheetName)) {
+      window.setTimeout(() => context.openSheet(sheet as SheetName), 200);
+    }
+
+    if (windowClosed === "1") {
+      setWindowClosedVisible(true);
+    }
+  }, [context, searchParams]);
 
   useEffect(() => {
     const check = () => {

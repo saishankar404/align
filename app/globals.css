@@ -85,6 +85,18 @@ body,
   background-color: #F2EDE4;
 }
 
+html[data-figma-capture="1"] {
+  scroll-behavior: auto !important;
+}
+
+html[data-figma-capture="1"] *,
+html[data-figma-capture="1"] *::before,
+html[data-figma-capture="1"] *::after {
+  animation: none !important;
+  transition: none !important;
+  caret-color: transparent !important;
+}
+
 body {
   font-family: "Satoshi", sans-serif;
   -webkit-font-smoothing: antialiased;

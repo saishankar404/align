@@ -90,6 +90,120 @@ const INITIAL_STATE: AppState = {
   sheetData: {},
 };
 
+function toDateStr(value: Date): string {
+  return value.toISOString().slice(0, 10);
+}
+
+function buildDemoState(): AppState {
+  const userId = "demo-user";
+  const today = new Date();
+  const start = new Date(today);
+  start.setDate(start.getDate() - 4);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 13);
+
+  const now = new Date().toISOString();
+  const todayDate = toDateStr(today);
+  const startDate = toDateStr(start);
+  const endDate = toDateStr(end);
+
+  const cycle: LocalCycle = {
+    id: "cycle-demo-1",
+    userId,
+    startDate,
+    endDate,
+    lengthDays: 14,
+    status: "active",
+    createdAt: now,
+    _synced: 0,
+  };
+
+  const directions: LocalDirection[] = [
+    { id: "dir-1", cycleId: cycle.id, userId, title: "Landing page", color: "terra", position: 1, createdAt: now, _synced: 0 },
+    { id: "dir-2", cycleId: cycle.id, userId, title: "Get fit", color: "forest", position: 2, createdAt: now, _synced: 0 },
+    { id: "dir-3", cycleId: cycle.id, userId, title: "Find a client", color: "slate", position: 3, createdAt: now, _synced: 0 },
+  ];
+
+  const todayMoves: LocalMove[] = [
+    {
+      id: "move-1",
+      cycleId: cycle.id,
+      directionId: "dir-2",
+      userId,
+      title: "Morning run 5km",
+      date: todayDate,
+      status: "done",
+      doneAt: now,
+      createdAt: now,
+      updatedAt: now,
+      _synced: 0,
+    },
+    {
+      id: "move-2",
+      cycleId: cycle.id,
+      directionId: "dir-1",
+      userId,
+      title: "Write the hero copy",
+      date: todayDate,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+      _synced: 0,
+    },
+  ];
+
+  const checkinsThisCycle: LocalCheckin[] = [];
+  for (let i = 0; i < 4; i += 1) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    checkinsThisCycle.push({
+      id: `checkin-${i + 1}`,
+      cycleId: cycle.id,
+      userId,
+      date: toDateStr(d),
+      status: i === 2 ? "avoided" : "showed_up",
+      createdAt: now,
+      _synced: 0,
+    });
+  }
+
+  const laterItems: LocalLaterItem[] = [
+    { id: "later-1", userId, type: "link", content: "designsystems.com/guide", note: "read after this cycle", promoted: false, dropped: false, createdAt: now, _synced: 0 },
+    { id: "later-2", userId, type: "idea", content: "Start a newsletter next cycle", promoted: false, dropped: false, createdAt: now, _synced: 0 },
+    { id: "later-3", userId, type: "link", content: "framer.com/motion/docs", promoted: false, dropped: false, createdAt: now, _synced: 0 },
+    { id: "later-4", userId, type: "idea", content: "Build referral loop experiment", promoted: false, dropped: false, createdAt: now, _synced: 0 },
+  ];
+
+  return {
+    ...INITIAL_STATE,
+    profile: {
+      id: userId,
+      name: "Sai",
+      timezone: "Asia/Kolkata",
+      notifMorningTime: "08:00",
+      notifNightTime: "21:30",
+      notifEnabled: true,
+    },
+    currentCycle: cycle,
+    allCycles: [cycle],
+    directions,
+    todayMoves,
+    allMovesThisCycle: todayMoves,
+    allMoves: todayMoves,
+    todayCheckin: null,
+    checkinsThisCycle,
+    allCheckins: checkinsThisCycle,
+    laterItems,
+    allLaterItems: laterItems,
+    currentDay: 5,
+    daysRemaining: 9,
+    isLoading: false,
+    userId,
+    activeSheet: null,
+    sheetData: {},
+  };
+}
+
 const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_BYPASS_AUTH === "true";
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -206,6 +320,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const run = async () => {
+      if (typeof window !== "undefined" && new URL(window.location.href).searchParams.get("demo") === "1") {
+        setState(buildDemoState());
+        return;
+      }
+
       const userId = await getActiveUserId();
 
       if (DEV_BYPASS_AUTH && !userId) {

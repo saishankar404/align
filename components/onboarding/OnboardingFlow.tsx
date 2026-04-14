@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -170,6 +170,7 @@ async function clearLocalUserData(userId: string): Promise<void> {
 
 export default function OnboardingFlow() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [linkState, setLinkState] = useState<LinkState>({ status: "idle" });
@@ -193,6 +194,54 @@ export default function OnboardingFlow() {
   );
 
   const CurrentScreen = steps[step];
+
+  useEffect(() => {
+    const stepParam = searchParams.get("step");
+    const screenParam = searchParams.get("screen");
+    const linkStateParam = searchParams.get("linkState");
+
+    if (stepParam || screenParam) {
+      let nextStep = 0;
+      if (stepParam) {
+        const parsed = Number(stepParam);
+        if (Number.isFinite(parsed)) {
+          nextStep = Math.max(0, Math.min(steps.length - 1, Math.trunc(parsed)));
+        }
+      } else if (screenParam) {
+        const normalized = screenParam.toLowerCase();
+        const byName = [
+          "welcome",
+          "syncchoice",
+          "storyproblem",
+          "storyfix",
+          "storyhowitworks",
+          "name",
+          "directions",
+          "cycle",
+          "notifications",
+          "done",
+        ].findIndex((name) => name === normalized);
+        if (byName >= 0) nextStep = byName;
+      }
+      setStep(nextStep);
+    }
+
+    if (linkStateParam === "conflict-signup") {
+      setLinkState({
+        status: "conflict",
+        mode: "signup",
+        resolution: "use_cloud",
+        message: "Capture mode: conflict state",
+      });
+    } else if (linkStateParam === "conflict-link") {
+      setLinkState({
+        status: "conflict",
+        mode: "link",
+        resolution: "use_cloud",
+        message: "Capture mode: conflict state",
+      });
+    }
+  }, [searchParams, steps.length]);
 
   useEffect(() => {
     if (linkState.status === "conflict" && linkState.mode === "signup") return;
