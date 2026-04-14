@@ -120,7 +120,7 @@ export default function PWAInstallPrompt() {
             <>
               <div className="font-gtw text-[27px] leading-[1.05] tracking-[-0.03em] text-ink mb-2">Add to Home Screen</div>
               <p className="font-body text-[13px] leading-[1.6] text-dusk mb-4">
-                Tap the Share button below, then tap "Add to Home Screen" for the full app experience.
+                Tap the Share button below, then tap &quot;Add to Home Screen&quot; for the full app experience.
               </p>
             </>
           ) : (
